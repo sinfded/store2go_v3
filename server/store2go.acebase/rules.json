@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    },
+    "inventory": {
+      "products": {
+        ".read": true,
+        ".write": true
+      },
+      "brands": {
+        ".read": true,
+        ".write": true
+      },
+      "categories": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}

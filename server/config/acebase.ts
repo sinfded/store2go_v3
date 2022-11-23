@@ -21,5 +21,8 @@ server.db.indexes.create('inventory/products', 'description');
 server.db.indexes.create('inventory/products', 'brand');
 server.db.indexes.create('inventory/products', 'category');
 server.db.indexes.create('inventory/products', 'supplier');
+server.db.indexes.create('orders', 'status');
+server.db.indexes.create('orders', 'createdAt');
+server.db.indexes.create('orders', 'orderId');
 
 export { server };

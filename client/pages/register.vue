@@ -1,6 +1,13 @@
 <template>
   <v-container fluid class="pa-0 ma-0 fill-height">
-    <v-sheet width="100%" height="100%" class="d-flex" color="transparent">
+    <v-sheet
+      tabindex="0"
+      width="100%"
+      height="100%"
+      class="d-flex"
+      color="transparent"
+      ref="registerPage"
+    >
       <v-sheet
         height="100%"
         class="d-flex flex-grow-1 flex-column justify-start"
@@ -8,7 +15,33 @@
       >
         <div class="d-flex mb-4 align-center">
           <ProductSearchBar v-on:addToCart="addToCart" />
+
           <v-btn
+            fab
+            tile
+            height="48"
+            width="48"
+            class="ml-4 rounded-l-lg"
+            elevation="2"
+            :class="[pricingOption == 'retail' ? 'primary' : '']"
+            @click="updateOrderPricing('retail')"
+          >
+            <v-icon size="28">mdi-store</v-icon>
+          </v-btn>
+          <v-btn
+            fab
+            tile
+            height="48"
+            width="48"
+            class="rounded-r-lg"
+            elevation="2"
+            :class="[pricingOption == 'wholesale' ? 'primary' : '']"
+            @click="updateOrderPricing('wholesale')"
+          >
+            <v-icon size="28">mdi-dolly</v-icon>
+          </v-btn>
+          <v-btn
+            @click="productScanModal = true"
             fab
             tile
             height="48"
@@ -127,7 +160,7 @@
           </v-sheet>
         </v-sheet>
         <v-sheet
-          v-if="$vuetify.breakpoint.xs"
+          v-if="$vuetify.breakpoint.smAndDown"
           width="100%"
           elevation="2"
           class="mt-4"
@@ -153,6 +186,7 @@
                   width="38"
                   class="ml-2 rounded-lg"
                   elevation="2"
+                  outlined
                 >
                   <v-icon color="grey darken-1">mdi-account-plus</v-icon>
                 </v-btn>
@@ -209,7 +243,7 @@
         </v-sheet>
       </v-sheet>
       <v-sheet
-        v-if="$vuetify.breakpoint.smAndUp"
+        v-if="$vuetify.breakpoint.mdAndUp"
         elevation="2"
         rounded="lg"
         color="accent"
@@ -269,7 +303,7 @@
             </v-row>
           </div>
         </v-sheet>
-        <v-sheet color="transparent" height="100%" class="flex">
+        <v-sheet color="transparent" height="100%" class="flex overflow-y-auto">
           <v-sheet color="transparent">
             <v-sheet
               class="px-2 text-subtitle-2 grey--text"
@@ -308,7 +342,6 @@
                   v-model="amountPaid"
                   outlined
                   label="Amount"
-                  autofocus
                   dense
                   hide-details
                   prepend-icon="mdi-currency-php"
@@ -322,7 +355,7 @@
                 >
                   <v-sheet
                     color="transparent"
-                    width="33%"
+                    width="33.3333%"
                     v-for="(denomination, index) in denominations"
                     :key="index"
                     v-show="denomination > cartTotal"
@@ -454,16 +487,29 @@
               >
             </v-col>
             <v-col cols="12" class="py-2">
-              <v-btn
-                block
-                large
+              <v-card
+                @click="payOrder"
+                dark
+                ripple
+                width="100%"
+                height="100%"
+                min-height="105"
                 color="primary"
-                class="rounded-lg"
-                :disabled="amountPaid < cartTotal"
-                @click="savePrint"
+                rounded="lg"
+                elevation="3"
+                class="d-flex flex-column justify-center align-center"
+                style="cursor: pointer"
               >
-                Save & Print Receipt
-              </v-btn>
+                <v-sheet
+                  width="56"
+                  height="56"
+                  color="primary lighten-1"
+                  class="d-flex justify-center align-center rounded-circle"
+                >
+                  <v-icon size="40">mdi-credit-card-outline</v-icon>
+                </v-sheet>
+                <span class="text-subtitle-2">Pay</span>
+              </v-card>
             </v-col>
           </v-row>
         </v-sheet>
@@ -475,12 +521,18 @@
       :toPay="cartTotal"
       v-on:closeModal="paymentModal = false"
     />
+    <ProductScanModal
+      :scanModal="productScanModal"
+      v-on:scanDone="onScanDone"
+      v-on:closeModal="productScanModal = false"
+    />
   </v-container>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'nuxt-property-decorator'
+import { Component, Vue, Watch } from 'nuxt-property-decorator'
 import PaymentModal from 'Component/Modals/PaymentModal.vue'
+import ProductScanModal from 'Component/Modals/ProductScanModal.vue'
 import ProductSearchBar from '~/components/Inventory/ProductSearchBar.vue'
 
 @Component({
@@ -488,6 +540,7 @@ import ProductSearchBar from '~/components/Inventory/ProductSearchBar.vue'
   components: {
     PaymentModal,
     ProductSearchBar,
+    ProductScanModal,
   },
 })
 export default class Register extends Vue {
@@ -496,13 +549,17 @@ export default class Register extends Vue {
   discount = 0
   vat = 0
   customer = 'Walk-in Customer'
+  pricingOption = 'retail'
   paymentModal = false
+  productScanModal = false
 
   items: NotWellDefinedObject[] = []
 
   customers: string[] = ['Walk-in Customer']
   selectedMethod = 'cash'
   amountPaid = 0
+
+  denominations: number[] = [1, 5, 10, 20, 50, 100, 200, 500, 1000]
 
   methods: NotWellDefinedObject[] = [
     {
@@ -544,8 +601,6 @@ export default class Register extends Vue {
     'China Bank',
   ].sort()
 
-  denominations: number[] = [1, 5, 10, 20, 50, 100, 200, 500, 1000]
-
   get cartItems() {
     return this.items.map((item: NotWellDefinedObject) => {
       return {
@@ -554,10 +609,28 @@ export default class Register extends Vue {
         brand: item.brand,
         variant: item.variant,
         description: item.description,
-        price: item.price,
+        price: item.price[this.pricingOption],
         quantity: item.quantity,
-        subtotal: item.price * item.quantity,
+        subtotal: item.price[this.pricingOption] * item.quantity,
       }
+    })
+  }
+
+  set cartItems(items: NotWellDefinedObject[]) {
+    const productIds = items.map((item: NotWellDefinedObject) => item.id)
+    productIds.forEach(async (id: string) => {
+      let product = await this.$inventory.getProduct(id)
+
+      let cartItem = {
+        id: id,
+        sku: product.sku,
+        brand: product.brand,
+        variant: product.variant,
+        description: product.description,
+        price: product.price,
+        quantity: items.find((item) => item.id == id)?.quantity,
+      }
+      this.items.push(cartItem)
     })
   }
 
@@ -587,6 +660,10 @@ export default class Register extends Vue {
     else return this.cartTotal
   }
 
+  onScanDone() {
+    this.productScanModal = false
+  }
+
   savePrint() {
     this.$emit('closeModal')
   }
@@ -595,15 +672,59 @@ export default class Register extends Vue {
     this.amountPaid = amount
   }
 
+  payOrder() {
+    console.log('Pay')
+  }
+
   addToCart(product: NotWellDefinedObject) {
     let cartItem = this.items.find(
       (item: NotWellDefinedObject) => item.id == product.id
     )
+    const currentOrderId = localStorage.getItem('currentOrderId')
 
     if (cartItem) {
+      console.log('update')
       cartItem.quantity += 1
+      if (currentOrderId != null) {
+        this.$order.updateOrderProperty(
+          `/orders/${currentOrderId}/items`,
+          this.cartItems
+        )
+      }
     } else {
       this.items.push(product)
+      if (currentOrderId != null) {
+        console.log('update')
+        this.$order.updateOrderProperty(
+          `/orders/${currentOrderId}/items`,
+          this.cartItems
+        )
+      } else {
+        console.log('new')
+        this.$order.createOrder(this.cartItems)
+      }
+    }
+  }
+
+  updateOrderItems() {
+    const currentOrderId = localStorage.getItem('currentOrderId')
+    if (currentOrderId) {
+      this.$order.updateOrderProperty(
+        `/orders/${currentOrderId}/items`,
+        this.cartItems
+      )
+    }
+  }
+
+  updateOrderPricing(pricing: string) {
+    this.pricingOption = pricing
+    const currentOrderId = localStorage.getItem('currentOrderId')
+    if (currentOrderId) {
+      this.$order.updateOrderProperty(
+        `/orders/${currentOrderId}/pricing`,
+        pricing
+      )
+      this.updateOrderItems()
     }
   }
 
@@ -614,6 +735,7 @@ export default class Register extends Vue {
       }
       return i
     })
+    this.updateOrderItems()
   }
 
   decreaseQty(item: NotWellDefinedObject) {
@@ -629,10 +751,31 @@ export default class Register extends Vue {
         (i: NotWellDefinedObject) => i.id != item.id
       )
     }
+
+    this.updateOrderItems()
+  }
+
+  onKeyUp(event: any) {
+    console.log(event)
   }
 
   changeBG(color: string) {
     this.searchBG = color
+  }
+
+  async mounted() {
+    const currentOrderId = localStorage.getItem('currentOrderId')
+    if (currentOrderId) {
+      const currentOrder = await this.$order.getOrder(currentOrderId)
+      this.cartItems = currentOrder.items
+      this.pricingOption = currentOrder.pricing
+    }
+
+    const registerPage = (this.$refs['registerPage'] as Vue).$el as HTMLElement
+    registerPage.addEventListener('keyup', (e) => {
+      if (e.key === 'w') this.pricingOption = 'wholesale'
+      else if (e.key === 'r') this.pricingOption = 'retail'
+    })
   }
 }
 </script>

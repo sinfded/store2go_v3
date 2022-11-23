@@ -33,7 +33,7 @@ export interface InventoryPluginImp {
   createProduct(productData: ProductData): Promise<NotWellDefinedObject>
   updateProduct(productData: ProductData): Promise<NotWellDefinedObject>
   getProduct(productId: string): Promise<NotWellDefinedObject>
-  getAllProducts(): Promise<NotWellDefinedObject[]>
+  getAllProducts(page: number, limit: number): Promise<NotWellDefinedObject[]>
   filterProducts(
     parameters: NotWellDefinedObject
   ): Promise<NotWellDefinedObject[]>
@@ -41,4 +41,6 @@ export interface InventoryPluginImp {
   getAllCategories(): Promise<NotWellDefinedObject[]>
   searchProducts(text: string): Promise<NotWellDefinedObject[]>
   removeProducts(productIds: string[]): Promise<string>
+  getProductByCode(productCode: string): Promise<NotWellDefinedObject | null>
+  getProductsCount(): Promise<number>
 }

@@ -50,6 +50,10 @@ const nuxtConfig = {
       src: '~/plugins/inventory',
       mode: 'client',
     },
+    {
+      src: '~/plugins/order',
+      mode: 'client',
+    },
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -128,7 +132,12 @@ const nuxtConfig = {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
-    transpile: ['acebase-core', 'acebase-client'],
+    transpile: ['acebase-core', 'acebase-client', 'escpos'],
+    extend(config, {}) {
+      config.node = {
+        fs: 'empty',
+      }
+    },
   },
   server: {
     port: process.env.APP_PORT,

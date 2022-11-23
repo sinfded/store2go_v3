@@ -2,6 +2,7 @@ import { NotifierPlugin } from '@/types/plugins/notifier'
 import { AuthPluginImp } from './auth'
 import { FormatPlugin } from './format'
 import { InventoryPluginImp } from './inventory'
+import { OrderPluginImp } from './order'
 
 declare module 'vue/types/vue' {
   interface Vue {
@@ -9,6 +10,7 @@ declare module 'vue/types/vue' {
     $auth: AuthPluginImp
     $format: FormatPlugin
     $inventory: InventoryPluginImp
+    $order: OrderPluginImp
   }
 }
 
@@ -18,6 +20,7 @@ declare module '@nuxt/types' {
     $auth: AuthPluginImp
     $format: FormatPlugin
     $inventory: InventoryPluginImp
+    $order: OrderPluginImp
   }
 
   interface Context {
@@ -25,6 +28,7 @@ declare module '@nuxt/types' {
     $auth: AuthPluginImp
     $format: FormatPlugin
     $inventory: InventoryPluginImp
+    $order: OrderPluginImp
   }
 }
 
@@ -34,5 +38,6 @@ declare module 'vuex/types/index' {
     $auth: AuthPluginImp
     $format: FormatPlugin
     $inventory: InventoryPluginImp
+    $order: OrderPluginImp
   }
 }

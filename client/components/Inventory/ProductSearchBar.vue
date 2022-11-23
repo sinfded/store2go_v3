@@ -8,26 +8,29 @@
       close-delay="2000"
     >
       <template v-slot:activator="{ on, attrs }">
-        <v-text-field
-          solo
-          placeholder="Search for products"
-          prepend-inner-icon="mdi-magnify"
-          color="primary"
-          class="text-subtitle-2 font-weight-regular flex-grow-1"
-          :class="[
-            $route.name == 'register'
-              ? 'rounded-lg'
-              : 'rounded-r-lg rounded-l-0',
-          ]"
-          background-color="accent"
-          autofocus
-          hide-details
-          v-model="query"
-          @keyup="search"
-          v-on="on"
-          v-bind="attrs"
-          clearable
-        ></v-text-field>
+        <v-form @submit.prevent="getProductByCode">
+          <v-text-field
+            solo
+            placeholder="Search for products"
+            prepend-inner-icon="mdi-magnify"
+            color="primary"
+            class="text-subtitle-2 font-weight-regular flex-grow-1"
+            :class="[
+              $route.name == 'inventory'
+                ? 'rounded-r-lg rounded-l-0'
+                : 'rounded-lg',
+            ]"
+            background-color="accent"
+            hide-details
+            v-model="query"
+            @keyup="search"
+            @blur="onBlur"
+            v-on="on"
+            v-bind="attrs"
+            clearable
+            ref="searchBox"
+          ></v-text-field>
+        </v-form>
       </template>
       <v-sheet
         elevation="2"
@@ -53,6 +56,7 @@
           elevation="1"
           rounded="lg"
           class="mb-2 px-3 d-flex align-center text-sm-subtitle-2 text-caption font-weight-medium grey--text text--darken-2"
+          @click="toCart(product)"
         >
           <div class="d-flex flex-column justify-center align-start">
             <div class="d-flex align-center">
@@ -84,11 +88,8 @@
               color="blue lighten-5"
               height="auto"
               width="80"
-              ripple
-              :flat="$route.name == 'inventory'"
-              :disabled="$route.name == 'inventory'"
-              style="cursor: pointer"
-              @click="toCart(product, 'wholesale')"
+              flat
+              disabled
             >
               <span style="font-size: x-small; line-height: 1">Wholesale</span>
               <span
@@ -102,11 +103,8 @@
               color="red lighten-5"
               height="auto"
               width="80"
-              ripple
-              :flat="$route.name == 'inventory'"
-              :disabled="$route.name == 'inventory'"
-              style="cursor: pointer"
-              @click="toCart(product, 'retail')"
+              flat
+              disabled
             >
               <span style="font-size: x-small; line-height: 1">Retail</span>
               <span
@@ -123,38 +121,77 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'nuxt-property-decorator'
+import { Component, Vue, Prop, Watch } from 'nuxt-property-decorator'
 
 @Component({})
 export default class ProductSearchBar extends Vue {
+  @Prop() readonly scanning!: boolean
   resultMenu = false
   searchResults: NotWellDefinedObject[] = []
   query: string = ''
 
   async search() {
-    if (this.query != '') {
-      const searchQuery = this.query.trim()
-      const result = await this.$inventory.searchProducts(searchQuery)
-      if (result.length >= 1) {
-        this.searchResults = result
-        this.resultMenu = true
+    if (!this.scanning) {
+      if (this.query != '') {
+        const searchQuery = this.query.trim()
+        const result = await this.$inventory.searchProducts(searchQuery)
+        if (result.length >= 1) {
+          this.searchResults = result
+          this.resultMenu = true
+        }
+      } else {
+        this.searchResults = []
       }
-    } else {
-      this.searchResults = []
     }
   }
 
-  toCart(product: NotWellDefinedObject, priceOption: string) {
+  toCart(product: NotWellDefinedObject) {
     const payload = {
       id: product.id,
       sku: product.sku,
       brand: product.brand,
       variant: product.variant,
       description: product.description,
-      price: product.price[priceOption],
+      price: product.price,
       quantity: 1,
     }
     this.$emit('addToCart', payload)
+  }
+
+  async getProductByCode() {
+    if (this.query != '') {
+      const product = await this.$inventory.getProductByCode(this.query)
+
+      if (product) {
+        const payload = {
+          id: product.id,
+          sku: product.sku,
+          brand: product.brand,
+          variant: product.variant,
+          description: product.description,
+          price: product.price,
+          quantity: 1,
+        }
+        this.$emit('addToCart', payload)
+        this.query = ''
+      } else {
+        this.query = ''
+      }
+    }
+  }
+
+  onBlur() {
+    this.$emit('scanDone')
+  }
+
+  @Watch('scanning')
+  onProductScan() {
+    const searchBox = this.$refs['searchBox'] as HTMLElement
+    if (this.scanning) {
+      searchBox.focus()
+    } else {
+      searchBox.blur()
+    }
   }
 }
 </script>

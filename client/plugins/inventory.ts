@@ -72,10 +72,16 @@ export class InventoryPlugin implements InventoryPluginImp {
     return await (await productsRef.child(productId).get()).val()
   }
 
-  async getAllProducts() {
+  async getAllProducts(page: number, limit: number) {
     let result: NotWellDefinedObject[] = []
 
-    const products = await db.query('inventory/products').get()
+    const products = await db
+      .query('inventory/products')
+      .take(limit)
+      .skip((page - 1) * limit)
+      .sort('brand')
+      .sort('description')
+      .get()
     if (products) {
       products.forEach((product) => {
         const id = product.key
@@ -206,6 +212,25 @@ export class InventoryPlugin implements InventoryPluginImp {
     console.log(result)
 
     return result
+  }
+
+  async getProductByCode(productCode: string) {
+    let product: NotWellDefinedObject | null = {}
+    const query = db
+      .query('inventory/products')
+      .filter('sku', '==', productCode)
+
+    if ((await query.count()) > 0) {
+      product = this.convertResultToArray(await query.get())[0]
+    } else {
+      product = null
+    }
+
+    return product
+  }
+
+  async getProductsCount(): Promise<number> {
+    return await db.query('inventory/products').count()
   }
 
   convertResultToArray(array: NotWellDefinedObject[]) {

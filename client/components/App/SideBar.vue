@@ -19,9 +19,10 @@ import { Component, Vue } from 'nuxt-property-decorator'
 @Component({})
 export default class SideBar extends Vue {
   links = [
-    { title: 'Dashboard', icon: 'mdi-view-dashboard', to: 'dashboard' },
-    { title: 'Register', icon: 'mdi-cash-register', to: 'register' },
-    { title: 'Inventory', icon: 'mdi-garage', to: 'inventory' },
+    { title: 'Dashboard', icon: 'mdi-view-dashboard', to: '/dashboard' },
+    { title: 'Register', icon: 'mdi-cash-register', to: '/register' },
+    { title: 'Inventory', icon: 'mdi-warehouse', to: '/inventory' },
+    { title: 'Orders', icon: 'mdi-clipboard-text', to: '/orders' },
   ]
 }
 </script>

@@ -21,8 +21,8 @@
             <v-badge
               dot
               color="red lighten-1"
-              :content="pendingOrders"
-              :value="pendingOrders"
+              :content="pendingCount"
+              :value="pendingCount"
             >
               <v-icon>mdi-inbox</v-icon>
             </v-badge>
@@ -33,15 +33,19 @@
           <v-divider class="mt-1"></v-divider>
         </v-sheet>
         <v-list dense :width="300" class="pa-0" elevation="0">
-          <v-list-item v-for="n in 2" :key="n" @click="() => {}">
+          <v-list-item v-for="(order, index) in pendingOrders" :key="index">
             <v-list-item-content>
-              <v-list-item-title>Order #{{ n }}</v-list-item-title>
+              <v-list-item-title>
+                <v-sheet class="d-flex justify-space-between">
+                  <span>Order #{{ $format.orderIdFormat(order.orderId) }}</span>
+                  <span>{{ $format.currencyFormat(order.subTotal) }}</span>
+                </v-sheet>
+              </v-list-item-title>
               <v-list-item-subtitle
-                >Lorem ipsum dolor sit amet consectetur, adipisicing elit.
-                Aliquid, eveniet aliquam? A distinctio illum aperiam quibusdam
-                porro, reprehenderit repellendus. Repellat, ea id! Provident
-                alias dolor, perferendis quibusdam eum consequatur
-                temporibus!</v-list-item-subtitle
+                >{{ order.numOfItems }}
+                {{
+                  order.numOfItems > 1 ? 'items' : 'item'
+                }}</v-list-item-subtitle
               >
             </v-list-item-content>
             <v-list-item-action>
@@ -121,7 +125,8 @@ import { Component, Vue, Watch } from 'nuxt-property-decorator'
 export default class AppBar extends Vue {
   showSearch = false
   routeName: any = ''
-  pendingOrders = 3
+  pendingCount = 3
+  pendingOrders: NotWellDefinedObject[] = []
 
   cart_items: NotWellDefinedObject[] = [
     {
@@ -154,16 +159,27 @@ export default class AppBar extends Vue {
     { title: 'Dashboard', icon: 'mdi-view-dashboard', to: 'dashboard' },
     { title: 'Register', icon: 'mdi-cash-register', to: 'register' },
     { title: 'Inventory', icon: 'mdi-garage', to: 'inventory' },
+    { title: 'Orders', icon: 'mdi-garage', to: 'orders' },
+    { title: 'Settngs', icon: 'mdi-garage', to: 'settings' },
   ]
 
   signOut() {
     this.$auth.signOut()
   }
 
+  async getPendingOrders() {
+    const { count, orders } = await this.$order.getPendingOrders()
+
+    this.pendingCount = count
+    this.pendingOrders = orders
+  }
+
   mounted() {
     this.routeName = this.links.find(
       (link: NotWellDefinedObject) => link.to == this.$route.name
     )?.title
+
+    this.getPendingOrders()
   }
 
   @Watch('$route')

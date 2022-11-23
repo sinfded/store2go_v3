@@ -31,4 +31,14 @@ function handleSignIn(result: { user: any; accessToken: any }) {
   )
 }
 
+db.on('signin', (evt) => {
+  console.log(`User ${evt.user.uid} signed in, source: ${evt.source}`)
+  // evt.source can be one of these: 'signin', 'email_signin', 'token_signin', 'password_change', 'signup'
+})
+
+db.on('signout', (evt) => {
+  console.log(`User ${evt.user.uid} signed out, source: ${evt.source}`)
+  // evt.source can be 'signout', 'signup' or 'delete_account'
+})
+
 export { db }

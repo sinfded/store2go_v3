@@ -178,6 +178,7 @@
             v-if="method == 'update'"
             color="primary"
             class="text-capitalize mr-2 rounded-lg"
+            width="100"
             @click="updateProduct"
           >
             Update
@@ -186,11 +187,17 @@
             v-else
             color="primary"
             class="text-capitalize mr-2 rounded-lg"
+            width="100"
             @click="saveProduct"
           >
             Save
           </v-btn>
-          <v-btn depressed class="text-capitalize rounded-lg" @click="cancel">
+          <v-btn
+            depressed
+            class="text-capitalize rounded-lg"
+            width="100"
+            @click="cancel"
+          >
             Cancel
           </v-btn>
         </v-row>

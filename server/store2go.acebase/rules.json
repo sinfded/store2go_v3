@@ -6,6 +6,10 @@
         ".write": "auth.uid === $uid"
       }
     },
+    "orders": {
+      ".read": true,
+      ".write": true
+    },
     "inventory": {
       "products": {
         ".read": true,

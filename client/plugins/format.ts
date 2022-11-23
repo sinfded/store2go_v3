@@ -21,6 +21,10 @@ export class FormatPlugin {
       minimumFractionDigits: minFracDig,
     }).format(numValue)
   }
+
+  orderIdFormat(value: number | string) {
+    return String(value).padStart(4, '0')
+  }
 }
 
 const formatPlugin: Plugin = function (context, inject) {

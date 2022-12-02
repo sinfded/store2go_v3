@@ -120,7 +120,7 @@ const nuxtConfig = {
         light: {
           primary: colors.deepPurple,
           accent: colors.grey.lighten4,
-          secondary: colors.white,
+          secondary: colors.grey.lighten3,
           info: colors.teal.lighten1,
           warning: colors.amber.base,
           error: colors.deepOrange.accent4,
@@ -132,10 +132,11 @@ const nuxtConfig = {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
-    transpile: ['acebase-core', 'acebase-client', 'escpos'],
+    transpile: ['acebase-core', 'acebase-client', 'escpos', '@tauri-apps/api'],
     extend(config, {}) {
       config.node = {
         fs: 'empty',
+        child_process: 'empty',
       }
     },
   },

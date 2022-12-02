@@ -533,6 +533,7 @@ export default class OrdersPage extends Vue {
   refreshTable() {
     this.emptySelected()
     this.getOrders()
+    this.$order.getPendingOrders()
     this.selectedOrders = []
     this.orderModal.modal = false
   }
@@ -559,7 +560,6 @@ export default class OrdersPage extends Vue {
 
   @Watch('page')
   onPageChange() {
-    console.log(this.page)
     this.getOrders()
   }
 }

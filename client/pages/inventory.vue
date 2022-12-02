@@ -426,8 +426,7 @@
       </v-sheet>
       <v-sheet
         v-if="$vuetify.breakpoint.lgAndUp"
-        width="30%"
-        min-width="350"
+        width="450"
         Cracker
         class="rounded-lg ml-4"
         color="accent"

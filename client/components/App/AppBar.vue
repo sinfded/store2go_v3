@@ -21,8 +21,8 @@
             <v-badge
               dot
               color="red lighten-1"
-              :content="pendingCount"
-              :value="pendingCount"
+              :content="$order.pendingOrders.count"
+              :value="$order.pendingOrders.count"
             >
               <v-icon>mdi-inbox</v-icon>
             </v-badge>
@@ -33,7 +33,10 @@
           <v-divider class="mt-1"></v-divider>
         </v-sheet>
         <v-list dense :width="300" class="pa-0" elevation="0">
-          <v-list-item v-for="(order, index) in pendingOrders" :key="index">
+          <v-list-item
+            v-for="(order, index) in $order.pendingOrders.orders"
+            :key="index"
+          >
             <v-list-item-content>
               <v-list-item-title>
                 <v-sheet class="d-flex justify-space-between">
@@ -125,8 +128,6 @@ import { Component, Vue, Watch } from 'nuxt-property-decorator'
 export default class AppBar extends Vue {
   showSearch = false
   routeName: any = ''
-  pendingCount = 3
-  pendingOrders: NotWellDefinedObject[] = []
 
   cart_items: NotWellDefinedObject[] = [
     {
@@ -160,18 +161,11 @@ export default class AppBar extends Vue {
     { title: 'Register', icon: 'mdi-cash-register', to: 'register' },
     { title: 'Inventory', icon: 'mdi-garage', to: 'inventory' },
     { title: 'Orders', icon: 'mdi-garage', to: 'orders' },
-    { title: 'Settngs', icon: 'mdi-garage', to: 'settings' },
+    { title: 'Settings', icon: 'mdi-garage', to: 'settings' },
   ]
 
   signOut() {
     this.$auth.signOut()
-  }
-
-  async getPendingOrders() {
-    const { count, orders } = await this.$order.getPendingOrders()
-
-    this.pendingCount = count
-    this.pendingOrders = orders
   }
 
   mounted() {
@@ -179,7 +173,11 @@ export default class AppBar extends Vue {
       (link: NotWellDefinedObject) => link.to == this.$route.name
     )?.title
 
-    this.getPendingOrders()
+    this.$order.getPendingOrders()
+  }
+
+  created() {
+    this.$order.getPendingOrders()
   }
 
   @Watch('$route')
@@ -187,6 +185,8 @@ export default class AppBar extends Vue {
     this.routeName = this.links.find(
       (link: NotWellDefinedObject) => link.to == this.$route.name
     )?.title
+
+    this.$order.getPendingOrders()
   }
 }
 </script>

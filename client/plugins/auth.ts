@@ -55,10 +55,15 @@ export class AuthPlugin implements AuthPluginImp {
 
   signOut(): void {
     try {
-      db.auth.signOut().then((res) => {
-        localStorage.clear()
-        this.redirect(this.authRedirectUris.login)
-      })
+      db.auth
+        .signOut()
+        .then((res) => {
+          localStorage.clear()
+          this.redirect(this.authRedirectUris.login)
+        })
+        .catch((err) => {
+          this.redirect(this.authRedirectUris.login)
+        })
     } catch (error) {
       console.error(error)
     }

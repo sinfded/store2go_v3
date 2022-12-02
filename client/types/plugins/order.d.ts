@@ -17,7 +17,14 @@ type OrderPayment = {
   grandTotal: number
 }
 
+type Pending = {
+  orders: NotWellDefinedObject[]
+  count: number
+}
+
 export interface OrderPluginImp {
+  pending: Pending
+  pendingOrders: Pending
   createOrder(orderItems: NotWellDefinedObject[]): Promise<NotWellDefinedObject>
   newOrder(orderItems: NotWellDefinedObject[]): Promise<NotWellDefinedObject>
   updateOrder(

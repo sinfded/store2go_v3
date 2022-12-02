@@ -1,11 +1,22 @@
 import { Plugin, Context } from '@nuxt/types'
-import { OrderData, OrderPluginImp } from '~/types/plugins/order'
+import { OrderData, OrderPluginImp, Pending } from '~/types/plugins/order'
 import { db } from '~/config/acebase'
 
 const ordersRef = db.ref('orders')
 
 export class OrderPlugin implements OrderPluginImp {
   constructor(context: Context) {}
+
+  public currentOrder: NotWellDefinedObject = {}
+  public orders: NotWellDefinedObject[] = []
+  public pending: Pending = {
+    orders: [],
+    count: 0,
+  }
+
+  get pendingOrders() {
+    return this.pending
+  }
 
   async createOrder(
     orderItems: NotWellDefinedObject[]
@@ -16,6 +27,7 @@ export class OrderPlugin implements OrderPluginImp {
       items: orderItems,
       status: 'pending',
       customer: 'Walk-in Customer',
+      pricing: 'wholesale',
       createdAt: Date.now(),
     })
 
@@ -115,9 +127,11 @@ export class OrderPlugin implements OrderPluginImp {
     } else {
       result = {
         orders: [],
-        count: [],
+        count: 0,
       }
     }
+
+    this.pending = result as Pending
 
     return result
   }

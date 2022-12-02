@@ -14,7 +14,11 @@
         color="transparent"
       >
         <div class="d-flex mb-4 align-center">
-          <ProductSearchBar v-on:addToCart="addToCart" />
+          <ProductSearchBar
+            v-on:addToCart="addToCart"
+            v-on:scanDone="productScan = false"
+            :scanning="productScan"
+          />
 
           <v-btn
             fab
@@ -41,7 +45,8 @@
             <v-icon size="28">mdi-dolly</v-icon>
           </v-btn>
           <v-btn
-            @click="productScanModal = true"
+            @click="onProductScan"
+            :loading="productScan"
             fab
             tile
             height="48"
@@ -521,11 +526,6 @@
       :toPay="cartTotal"
       v-on:closeModal="paymentModal = false"
     />
-    <ProductScanModal
-      :scanModal="productScanModal"
-      v-on:scanDone="onScanDone"
-      v-on:closeModal="productScanModal = false"
-    />
   </v-container>
 </template>
 
@@ -534,6 +534,7 @@ import { Component, Vue, Watch } from 'nuxt-property-decorator'
 import PaymentModal from 'Component/Modals/PaymentModal.vue'
 import ProductScanModal from 'Component/Modals/ProductScanModal.vue'
 import ProductSearchBar from '~/components/Inventory/ProductSearchBar.vue'
+import { invoke } from '@tauri-apps/api/tauri'
 
 @Component({
   layout: 'main',
@@ -549,9 +550,9 @@ export default class Register extends Vue {
   discount = 0
   vat = 0
   customer = 'Walk-in Customer'
-  pricingOption = 'retail'
+  pricingOption = 'wholesale'
   paymentModal = false
-  productScanModal = false
+  productScan = false
 
   items: NotWellDefinedObject[] = []
 
@@ -660,10 +661,6 @@ export default class Register extends Vue {
     else return this.cartTotal
   }
 
-  onScanDone() {
-    this.productScanModal = false
-  }
-
   savePrint() {
     this.$emit('closeModal')
   }
@@ -674,6 +671,7 @@ export default class Register extends Vue {
 
   payOrder() {
     console.log('Pay')
+    // invoke('print')
   }
 
   addToCart(product: NotWellDefinedObject) {
@@ -703,6 +701,14 @@ export default class Register extends Vue {
         console.log('new')
         this.$order.createOrder(this.cartItems)
       }
+    }
+  }
+
+  onProductScan() {
+    if (!this.productScan) {
+      this.productScan = true
+    } else {
+      this.productScan = false
     }
   }
 

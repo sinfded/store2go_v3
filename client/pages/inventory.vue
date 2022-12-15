@@ -459,6 +459,7 @@ import ProductSearchBar from '~/components/Inventory/ProductSearchBar.vue'
 
 @Component({
   layout: 'main',
+  middleware: 'authenticated',
   components: {
     ProductModal,
     ProductDeleteModal,

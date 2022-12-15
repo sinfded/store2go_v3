@@ -25,7 +25,13 @@
       </v-sheet>
       <v-sheet width="100%" class="pa-3 pb-6">
         <v-row no-gutters justify="center">
-          <v-btn depressed class="text-capitalize rounded-lg"> Cancel </v-btn>
+          <v-btn
+            depressed
+            class="text-capitalize rounded-lg"
+            @click="$emit('closeModal')"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             dark
             color="red lighten-1"

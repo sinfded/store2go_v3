@@ -56,7 +56,7 @@
                 >
               </v-list-item-content>
             </v-list-item>
-            <v-list-item link to="settings">
+            <v-list-item link to="/settings">
               <v-list-item-icon>
                 <v-icon>mdi-cog</v-icon>
               </v-list-item-icon>
@@ -73,19 +73,20 @@
       >
         <AppBar class="mt-2 mx-4" v-on:clickNavIcon="onClickNavIcon" />
         <v-container fluid class="pa-4 ma-0" style="height: calc(100vh - 64px)">
-          <Nuxt />
+          <Nuxt :nuxtChildKey="orderId" />
         </v-container>
       </v-main>
     </v-row>
   </v-app>
 </template>
 
-<script>
+<script lang="ts">
 import { Component, Vue } from 'nuxt-property-decorator'
 
 @Component({})
 export default class Main extends Vue {
   drawer = true
+  orderId = ''
 
   get sideBar() {
     let sidebar_stat = false
@@ -103,6 +104,31 @@ export default class Main extends Vue {
 
   onClickNavIcon() {
     this.drawer = !this.drawer
+  }
+
+  changePrimaryColor(color: string) {
+    this.$vuetify.theme.themes.dark.primary = color
+    this.$vuetify.theme.themes.light.primary = color
+  }
+
+  changeTheme(theme: string) {
+    if (theme == 'light') this.$vuetify.theme.dark = false
+    else this.$vuetify.theme.dark = true
+  }
+
+  created() {
+    this.$nuxt.$on('setCurrentOrder', (orderId: string) => {
+      console.log(orderId)
+      this.orderId = orderId
+    })
+  }
+
+  mounted() {
+    const userSettings = this.$settings.getUserSettings()
+    this.changePrimaryColor(
+      userSettings?.primaryColor || localStorage.getItem('primaryColor')
+    )
+    this.changeTheme(userSettings?.theme || localStorage.getItem('theme'))
   }
 }
 </script>

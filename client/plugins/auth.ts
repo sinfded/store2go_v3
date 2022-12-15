@@ -18,11 +18,23 @@ export class AuthPlugin implements AuthPluginImp {
     this.$notifier = context.$notifier
   }
 
+  get currentUser() {
+    let user = null
+    if (db.auth.user) {
+      user = db.auth.user
+    }
+    return user
+  }
+
   async signIn(username: string, password: string): Promise<void> {
     try {
       const res = await db.auth.signIn(username, password)
       if (res.user) {
+        const { primaryColor, theme } = res.user
+          .settings as NotWellDefinedObject
         localStorage.setItem('accessToken', res.accessToken)
+        localStorage.setItem('primaryColor', primaryColor || '#673AB7')
+        localStorage.setItem('theme', theme || 'light')
         this.redirect(this.authRedirectUris.auth)
         this.$notifier.notifierState = {
           iconName: 'mdi-check',

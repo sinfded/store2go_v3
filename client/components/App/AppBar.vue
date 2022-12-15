@@ -61,6 +61,7 @@
                 elevation="0"
                 color="primary"
                 dark
+                @click="setCurrentOrder(order.id)"
               >
                 <v-icon size="20">mdi-tray-arrow-down</v-icon>
               </v-btn>
@@ -178,6 +179,12 @@ export default class AppBar extends Vue {
 
   created() {
     this.$order.getPendingOrders()
+  }
+
+  setCurrentOrder(orderId: string) {
+    // console.log(this.$order.setCurrentOrder(orderId))
+    // console.log(this.$order.change)
+    this.$nuxt.$emit('setCurrentOrder', orderId)
   }
 
   @Watch('$route')

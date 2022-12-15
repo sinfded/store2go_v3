@@ -436,6 +436,7 @@ import OrderModal from '~/components/Modals/OrderModal.vue'
 
 @Component({
   layout: 'main',
+  middleware: 'authenticated',
   components: {
     ProductSearchBar,
     OrderModal,

@@ -181,6 +181,7 @@ export default class ProductSearchBar extends Vue {
   }
 
   onBlur() {
+    this.query = ''
     this.$emit('scanDone')
   }
 

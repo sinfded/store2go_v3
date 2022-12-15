@@ -1,11 +1,16 @@
 import { Plugin, Context } from '@nuxt/types'
 import { OrderData, OrderPluginImp, Pending } from '~/types/plugins/order'
 import { db } from '~/config/acebase'
+import { NuxtAxiosInstance } from '@nuxtjs/axios'
 
 const ordersRef = db.ref('orders')
 
 export class OrderPlugin implements OrderPluginImp {
-  constructor(context: Context) {}
+  $axios: NuxtAxiosInstance
+
+  constructor(context: Context) {
+    this.$axios = context.$axios
+  }
 
   public currentOrder: NotWellDefinedObject = {}
   public orders: NotWellDefinedObject[] = []
@@ -13,9 +18,14 @@ export class OrderPlugin implements OrderPluginImp {
     orders: [],
     count: 0,
   }
+  public change: boolean = false
 
   get pendingOrders() {
     return this.pending
+  }
+
+  get orderChange() {
+    return this.change
   }
 
   async createOrder(
@@ -31,8 +41,8 @@ export class OrderPlugin implements OrderPluginImp {
       createdAt: Date.now(),
     })
 
+    db.auth.updateUserSettings({ currentOrderId: orderRef.key })
     localStorage.setItem('currentOrderId', orderRef.key)
-    console.log(orderRef)
 
     return orderRef
   }
@@ -68,6 +78,19 @@ export class OrderPlugin implements OrderPluginImp {
       property = update
       return property
     })
+  }
+
+  async payOrder(
+    orderId: string,
+    updateData: NotWellDefinedObject
+  ): Promise<NotWellDefinedObject> {
+    const { payment, status } = updateData
+    await this.updateOrderProperty(`/orders/${orderId}/status`, status)
+    await this.updateOrderProperty(`/orders/${orderId}/payment`, payment)
+    await db.auth.updateUserSettings({ currentOrderId: '' })
+    const updatedOrder = await this.getOrder(orderId)
+
+    return updatedOrder
   }
 
   removeOrder(orderId: string): void {
@@ -162,6 +185,18 @@ export class OrderPlugin implements OrderPluginImp {
 
   async getOrdersCount(): Promise<number> {
     return await db.query('orders').count()
+  }
+
+  async print(data: NotWellDefinedObject): Promise<any> {
+    const result = await this.$axios.post('http://localhost:8000/print', data)
+
+    return result
+  }
+
+  async setCurrentOrder(orderId: string) {
+    console.log(orderId)
+    this.change = !this.change
+    return {}
   }
 }
 

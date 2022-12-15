@@ -17,6 +17,8 @@ export type Account = {
 export interface AuthPluginImp {
   authRedirectUris: AuthRedirectUris
 
+  currentUser: AceBaseUser | null
+
   signIn(username: string, password: string): Promise<void>
   signUp(userData: Account): Promise<NotWellDefinedObject | void>
   signOut(): void

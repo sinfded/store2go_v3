@@ -5,7 +5,7 @@
   </v-app>
 </template>
 
-<script>
+<script lang="ts">
 import { Component, Vue } from 'nuxt-property-decorator'
 // import { Command } from '@tauri-apps/api/shell'
 // import { listen } from '@tauri-apps/api/event'

@@ -54,6 +54,10 @@ const nuxtConfig = {
       src: '~/plugins/order',
       mode: 'client',
     },
+    {
+      src: '~/plugins/settings',
+      mode: 'client',
+    },
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -136,7 +140,6 @@ const nuxtConfig = {
     extend(config, {}) {
       config.node = {
         fs: 'empty',
-        child_process: 'empty',
       }
     },
   },

@@ -26,9 +26,7 @@ if (db.connected) {
 }
 
 function handleSignIn(result: { user: any; accessToken: any }) {
-  console.log(
-    `Signed in as ${result.user.email}, got access token ${result.accessToken}`
-  )
+  console.log(`Signed in`)
 }
 
 db.on('signin', (evt) => {

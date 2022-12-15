@@ -31,9 +31,13 @@
           <v-tabs-items
             v-model="currentTab"
             vertical
-            class="flex-grow-1 transparent"
+            class="flex-grow-1 transparent fill-height"
           >
-            <v-tab-item v-for="item in tabs" :key="item.title">
+            <v-tab-item
+              v-for="item in tabs"
+              :key="item.title"
+              class="fill-height"
+            >
               <AccountTab v-if="item.tab == 'account'" />
               <AppearanceTab v-if="item.tab == 'appearance'" />
               <DevicesTab v-if="item.tab == 'devices'" />
@@ -53,6 +57,7 @@ import DevicesTab from '~/components/Settings/Tabs/Devices.vue'
 
 @Component({
   layout: 'main',
+  middleware: 'authenticated',
   components: {
     AccountTab,
     AppearanceTab,

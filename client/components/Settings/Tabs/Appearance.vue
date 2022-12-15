@@ -95,7 +95,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'nuxt-property-decorator'
+import { Component, Vue, Watch } from 'nuxt-property-decorator'
 
 @Component({})
 export default class AppearanceTab extends Vue {
@@ -125,17 +125,32 @@ export default class AppearanceTab extends Vue {
     this.primaryColor = color
     this.$vuetify.theme.themes.dark.primary = color
     this.$vuetify.theme.themes.light.primary = color
+    this.$settings.setAccentColor(color)
   }
 
   changeTheme(theme: string) {
     this.currentTheme = theme
     if (theme == 'light') this.$vuetify.theme.dark = false
     else this.$vuetify.theme.dark = true
+    this.$settings.setTheme(theme)
   }
 
   mounted() {
-    console.log(this.$vuetify.theme.dark)
-    console.log(this.currentTheme)
+    const userSettings = this.$settings.getUserSettings()
+    this.primaryColor = userSettings?.primaryColor || '#673AB7'
+    this.currentTheme = userSettings?.theme || 'light'
+  }
+
+  @Watch('primaryColor')
+  onPrimaryColorChange() {
+    this.$vuetify.theme.themes.dark.primary = this.primaryColor
+    this.$vuetify.theme.themes.light.primary = this.primaryColor
+  }
+
+  @Watch('currentTheme')
+  onCurrentThemeChange() {
+    if (this.currentTheme == 'light') this.$vuetify.theme.dark = false
+    else this.$vuetify.theme.dark = true
   }
 }
 </script>

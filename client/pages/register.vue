@@ -111,6 +111,7 @@
                       </v-sheet>
                     </div>
                     <v-sheet
+                      v-if="$vuetify.breakpoint.mdAndDown"
                       width="100%"
                       class="d-flex grey--text mt-n1"
                       style="font-size: x-small"
@@ -504,6 +505,7 @@
                 elevation="3"
                 class="d-flex flex-column justify-center align-center"
                 style="cursor: pointer"
+                :disabled="amountPaid == 0"
               >
                 <v-sheet
                   width="56"
@@ -526,6 +528,12 @@
       :toPay="cartTotal"
       v-on:closeModal="paymentModal = false"
     />
+    <PaymentSuccessModal
+      v-if="paymentSuccessModal"
+      :showModal="paymentSuccessModal"
+      :transactionData="transactionData"
+      v-on:closeModal="onPrintDone"
+    />
   </v-container>
 </template>
 
@@ -534,14 +542,16 @@ import { Component, Vue, Watch } from 'nuxt-property-decorator'
 import PaymentModal from 'Component/Modals/PaymentModal.vue'
 import ProductScanModal from 'Component/Modals/ProductScanModal.vue'
 import ProductSearchBar from '~/components/Inventory/ProductSearchBar.vue'
-import { invoke } from '@tauri-apps/api/tauri'
+import PaymentSuccessModal from '~/components/Modals/PaymentSuccessModal.vue'
 
 @Component({
   layout: 'main',
+  middleware: 'authenticated',
   components: {
     PaymentModal,
     ProductSearchBar,
     ProductScanModal,
+    PaymentSuccessModal,
   },
 })
 export default class Register extends Vue {
@@ -552,7 +562,9 @@ export default class Register extends Vue {
   customer = 'Walk-in Customer'
   pricingOption = 'wholesale'
   paymentModal = false
+  paymentSuccessModal = false
   productScan = false
+  transactionData: NotWellDefinedObject = {}
 
   items: NotWellDefinedObject[] = []
 
@@ -570,6 +582,12 @@ export default class Register extends Vue {
       disable: false,
     },
     {
+      text: 'Cheque',
+      value: 'cheque',
+      icon: 'mdi-checkbook',
+      disable: true,
+    },
+    {
       text: 'Credit Card',
       value: 'credit_card',
       icon: 'mdi-credit-card-outline',
@@ -580,12 +598,6 @@ export default class Register extends Vue {
       value: 'debit_card',
       icon: 'mdi-credit-card-outline',
       disable: true,
-    },
-    {
-      text: 'Cheque',
-      value: 'cheque',
-      icon: 'mdi-checkbook',
-      disable: false,
     },
   ].sort((a: any, b: any) => (a.disable === b.disable ? 0 : a.disable ? 1 : -1))
 
@@ -669,9 +681,48 @@ export default class Register extends Vue {
     this.amountPaid = amount
   }
 
-  payOrder() {
-    console.log('Pay')
-    // invoke('print')
+  async payOrder() {
+    const currentOrderId = localStorage.getItem('currentOrderId') as string
+    const dateTime = `${new Date()
+      .toDateString()
+      .substring(4, 16)} ${new Date().toLocaleTimeString()}`
+    const paidOrder = await this.$order.payOrder(currentOrderId, {
+      status: 'fulfilled',
+      payment: {
+        method: this.selectedMethod,
+        vat: this.vat,
+        discount: this.discount,
+        amountPaid: this.amountPaid,
+        change: this.change,
+        dateTime: dateTime,
+      },
+    })
+    console.log(paidOrder)
+    if (paidOrder.status == 'fulfilled') {
+      this.paymentSuccessModal = true
+      this.transactionData = {
+        store: {
+          name: 'Lucky Savers Mini Store',
+          address: 'P-5, Alawihao, Daet, Camarines Norte',
+          tin: '916-931-669-0000',
+        },
+        cart: {
+          items: this.cartItems,
+          subtotal: this.cartSubtotal,
+          total: this.cartTotal,
+          numOfItems: this.cartItems.length,
+        },
+        payment: {
+          method: this.selectedMethod,
+          customer: this.customer,
+          vat: this.vat,
+          discount: this.discount,
+          amountPaid: this.amountPaid,
+          change: this.change,
+          dateTime: dateTime,
+        },
+      }
+    }
   }
 
   addToCart(product: NotWellDefinedObject) {
@@ -710,6 +761,15 @@ export default class Register extends Vue {
     } else {
       this.productScan = false
     }
+  }
+
+  onPrintDone() {
+    this.paymentSuccessModal = false
+    localStorage.removeItem('currentOrderId')
+    this.cartItems = []
+    this.items = []
+    this.selectedMethod = 'cash'
+    this.customer = 'Walk-in Customer'
   }
 
   updateOrderItems() {
@@ -769,9 +829,18 @@ export default class Register extends Vue {
     this.searchBG = color
   }
 
+  created() {
+    this.$nuxt.$on('setCurrentOrder', (data: any) => {
+      console.log(data)
+    })
+  }
+
   async mounted() {
-    const currentOrderId = localStorage.getItem('currentOrderId')
+    const currentOrderId =
+      this.$settings.getUserSettings()?.currentOrderId ||
+      localStorage.getItem('currentOrderId')
     if (currentOrderId) {
+      localStorage.setItem('currentOrderId', currentOrderId)
       const currentOrder = await this.$order.getOrder(currentOrderId)
       this.cartItems = currentOrder.items
       this.pricingOption = currentOrder.pricing

@@ -1,4 +1,3 @@
-/client
 /node_modules
-/store2go.acebase
-/uploads
+store2go.acebase
+uploads

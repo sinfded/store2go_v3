@@ -23,7 +23,7 @@
             >
           </span>
           <v-sheet
-            v-if="payment.paidAt != null"
+            v-if="payment.dateTime != null"
             height="20"
             class="px-2 rounded-lg text-caption font-weight-bold blue--text text--darken-1 d-flex align-center text-capitalize mr-3"
             color="blue lighten-5"
@@ -64,7 +64,27 @@
             }}</span>
           </div>
         </v-sheet>
-        <v-sheet width="350"> </v-sheet>
+        <v-sheet width="350" color="transparent" class="d-flex justify-end">
+          <!-- <v-btn @click="showReceipt = true" color="primary" class="rounded-lg">
+            <v-icon>mdi-receipt-text</v-icon> Receipt
+          </v-btn> -->
+          <v-btn
+            v-if="payment.dateTime != null"
+            height="48"
+            :width="!$vuetify.breakpoint.smAndUp ? '48' : ''"
+            class="ml-4 rounded-lg text-capitalize text-subtitle-2"
+            elevation="2"
+            dark
+            color="grey darken-1"
+            :fab="!$vuetify.breakpoint.smAndUp"
+            @click="showReceipt = true"
+          >
+            <v-icon :class="[$vuetify.breakpoint.smAndUp ? 'mr-2 ' : '']"
+              >mdi-receipt-text</v-icon
+            >
+            <span v-if="$vuetify.breakpoint.smAndUp">Receipt</span>
+          </v-btn>
+        </v-sheet>
       </v-sheet>
       <v-sheet
         width="100%"
@@ -79,20 +99,98 @@
         >
           <v-sheet
             width="100%"
-            color="accent"
-            class="flex-grow-1 mb-4 px-4 py-2"
+            class="flex-grow-1 mb-4 pa-2"
             elevation="2"
             rounded="lg"
           >
-            <span class="text-subtitle-1 font-weight-medium">Cart</span>
+            <span class="text-subtitle-1 font-weight-medium px-2">Cart</span>
+            <v-sheet
+              class="flex-grow-1 d-flex flex-column overflow-hidden"
+              width="100%"
+              color="transparent"
+            >
+              <v-sheet
+                class="py-3 px-5 text-sm-subtitle-2 text-caption"
+                color="transparent"
+              >
+                <v-row no-gutters align="center">
+                  <v-col v-if="$vuetify.breakpoint.lgAndUp" cols="1">SKU</v-col>
+                  <v-col cols="5" lg="4">Description</v-col>
+                  <v-col cols="2" class="text-center">Price</v-col>
+                  <v-col cols="3" lg="2" class="text-center">Qty.</v-col>
+                  <v-col cols="2" class="text-right">Subtotal</v-col>
+                </v-row>
+              </v-sheet>
+              <v-divider class="mx-2"></v-divider>
+              <v-sheet
+                class="flex-grow-1 overflow-y-auto pt-2 px-2"
+                color="transparent"
+                width="100%"
+              >
+                <v-sheet
+                  v-for="(item, index) in cartItems"
+                  :key="index"
+                  height="56"
+                  elevation="1"
+                  rounded="lg"
+                  class="mb-2 px-3 d-flex align-content-center text-sm-subtitle-2 text-caption font-weight-medium"
+                >
+                  <v-row no-gutters align="center">
+                    <v-col v-if="$vuetify.breakpoint.lgAndUp" cols="1">{{
+                      item.sku
+                    }}</v-col>
+                    <v-col
+                      cols="5"
+                      lg="4"
+                      class="d-flex flex-column justify-start"
+                    >
+                      <div
+                        class="d-flex flex-column justify-center align-start"
+                      >
+                        <div class="d-flex align-center">
+                          <span>
+                            {{ item.description }}
+                          </span>
+                          <v-sheet
+                            height="20"
+                            class="px-2 rounded-lg ml-2 text-caption font-weight-bold green--text text--darken-1 d-flex align-center"
+                            color="green lighten-5"
+                          >
+                            {{ item.variant }}
+                          </v-sheet>
+                        </div>
+                        <v-sheet
+                          v-if="$vuetify.breakpoint.mdAndDown"
+                          width="100%"
+                          class="d-flex grey--text mt-n1"
+                          style="font-size: x-small"
+                          color="transparent"
+                        >
+                          <span>{{ item.sku }}</span>
+                        </v-sheet>
+                      </div>
+                    </v-col>
+                    <v-col cols="2" class="text-center">{{
+                      $format.currencyFormat(item.price)
+                    }}</v-col>
+                    <v-col cols="3" lg="2">
+                      <v-sheet
+                        width="80"
+                        max-width="100%"
+                        class="d-flex justify-center align-center mx-auto"
+                      >
+                        <span>{{ item.quantity }}</span>
+                      </v-sheet>
+                    </v-col>
+                    <v-col cols="2" class="text-right">{{
+                      $format.currencyFormat(item.subtotal)
+                    }}</v-col>
+                  </v-row>
+                </v-sheet>
+              </v-sheet>
+            </v-sheet>
           </v-sheet>
-          <v-sheet
-            width="100%"
-            color="accent"
-            elevation="2"
-            rounded="lg"
-            class="px-4 py-2"
-          >
+          <v-sheet width="100%" elevation="2" rounded="lg" class="px-4 py-2">
             <span class="text-subtitle-1 font-weight-medium"
               >Payment Summary</span
             >
@@ -136,7 +234,6 @@
         </v-sheet>
         <v-sheet
           width="350"
-          color="accent"
           height="100%"
           elevation="2"
           rounded="lg"
@@ -145,15 +242,15 @@
           <v-sheet color="transparent">
             <span class="text-subtitle-1 font-weight-medium">Activity</span>
             <v-sheet class="pa-3 d-flex mt-2" elevation="1" rounded="lg">
-              <div
+              <v-sheet
                 class="text-subtitle-2 d-flex flex-column mr-2"
-                style="min-width: 82px"
+                min-width="83"
               >
                 <span>{{ getTimeline(order.createdAt).date }}</span>
                 <span class="text-caption">{{
                   getTimeline(order.createdAt).time
                 }}</span>
-              </div>
+              </v-sheet>
               <v-divider vertical></v-divider>
               <div class="ml-2 flex-grow-1 d-flex flex-column">
                 <span class="text-subtitle-2 font-weight-medium primary--text"
@@ -167,15 +264,15 @@
               elevation="1"
               rounded="lg"
             >
-              <div
+              <v-sheet
                 class="text-subtitle-2 d-flex flex-column mr-2"
-                style="min-width: 82px"
+                min-width="83"
               >
                 <span>{{ getTimeline(payment.dateTime).date }}</span>
                 <span class="text-caption">{{
                   getTimeline(payment.dateTime).time
                 }}</span>
-              </div>
+              </v-sheet>
               <v-divider vertical></v-divider>
               <div class="ml-2 flex-grow-1 d-flex flex-column">
                 <p
@@ -189,13 +286,25 @@
         </v-sheet>
       </v-sheet>
     </v-sheet>
+    <ReceiptModal
+      v-if="payment.dateTime != null"
+      :transactionData="receiptData"
+      :showModal="showReceipt"
+      v-on:closeModal="showReceipt = false"
+    />
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'nuxt-property-decorator'
+import ReceiptModal from '~/components/Modals/ReceiptModal.vue'
+
 @Component({
   layout: 'main',
+  middleware: 'authenticated',
+  components: {
+    ReceiptModal,
+  },
 })
 export default class OrderPage extends Vue {
   order: NotWellDefinedObject = {
@@ -208,6 +317,9 @@ export default class OrderPage extends Vue {
     status: '',
   }
   payment: NotWellDefinedObject = {}
+  receiptData: NotWellDefinedObject = {}
+
+  showReceipt = false
 
   get numOfItems() {
     if (this.order.items == undefined) return 0
@@ -237,6 +349,23 @@ export default class OrderPage extends Vue {
     }
   }
 
+  get cartItems() {
+    if (this.order.items == undefined) return []
+    else
+      return this.order.items.map((item: NotWellDefinedObject) => {
+        return {
+          id: item.id,
+          sku: item.sku,
+          brand: item.brand,
+          variant: item.variant,
+          description: item.description,
+          price: item.price,
+          quantity: item.quantity,
+          subtotal: item.subtotal,
+        }
+      })
+  }
+
   getTimeline(dateTime: string | number) {
     const timestamp = new Date(dateTime)
     const date = timestamp.toDateString().substring(4, 16)
@@ -248,6 +377,20 @@ export default class OrderPage extends Vue {
   async created() {
     this.order = await this.$order.getOrder(this.$route.params.orderId)
     this.payment = this.order.payment || {}
+    this.receiptData = {
+      store: {
+        name: 'Lucky Savers Mini Store',
+        address: 'P-5, Alawihao, Daet, Camarines Norte',
+        tin: '916-931-669-0000',
+      },
+      cart: {
+        items: this.order.items,
+        subtotal: this.subtotal,
+        total: this.totalPaid,
+        numOfItems: this.order.items.length,
+      },
+      payment: this.payment,
+    }
   }
 }
 </script>

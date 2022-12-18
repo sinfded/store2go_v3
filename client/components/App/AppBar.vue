@@ -1,10 +1,19 @@
 <template>
-  <v-app-bar flat class="rounded-lg elevation-1" :height="56">
-    <v-app-bar-nav-icon
+  <v-sheet
+    elevation="1"
+    rounded="lg"
+    :height="56"
+    class="d-flex align-center"
+    :class="[$vuetify.breakpoint.smAndDown ? 'pr-4' : 'px-4']"
+  >
+    <v-btn
       v-if="$vuetify.breakpoint.smAndDown"
+      fab
+      icon
       @click.stop="$emit('clickNavIcon')"
     >
-    </v-app-bar-nav-icon>
+      <v-icon> mdi-menu </v-icon>
+    </v-btn>
     <v-sheet class="py-2 rounded" color="transparent">
       <span
         class="font-weight-bold"
@@ -32,7 +41,13 @@
           <span class="px-2">Pending Orders</span>
           <v-divider class="mt-1"></v-divider>
         </v-sheet>
-        <v-list dense :width="300" class="pa-0" elevation="0">
+        <v-list
+          v-if="$order.pendingOrders.count > 0"
+          dense
+          :width="300"
+          class="pa-0"
+          elevation="0"
+        >
           <v-list-item
             v-for="(order, index) in $order.pendingOrders.orders"
             :key="index"
@@ -68,6 +83,17 @@
             </v-list-item-action>
           </v-list-item>
         </v-list>
+        <v-list v-else dense :width="300" class="pa-0" elevation="0">
+          <v-list-item>
+            <v-list-item-content>
+              <v-sheet
+                class="d-flex justify-center text-caption font-italic grey--text"
+              >
+                <span>No pending orders.</span>
+              </v-sheet>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
       </v-menu>
       <v-btn icon :height="40" :width="40">
         <v-icon>mdi-bell</v-icon>
@@ -85,15 +111,18 @@
 
         <v-sheet class="pt-4 pb-3" elevation="0">
           <div class="d-flex flex-column justify-center">
-            <v-img
+            <!-- <v-img
               src="https://cdn2.iconfinder.com/data/icons/avatars-99/62/avatar-370-456322-512.png"
               max-height="100"
               max-width="100"
               class="mx-auto"
-            ></v-img>
-            <span class="heading mx-auto mt-2 font-weight-medium"
-              >Full Name</span
-            >
+            ></v-img> -->
+            <v-avatar color="grey" size="100" class="mx-auto">
+              <v-img :src="profilePic" max-height="100" max-width="100"></v-img>
+            </v-avatar>
+            <span class="heading mx-auto mt-2 font-weight-medium">{{
+              userData.displayName
+            }}</span>
             <span class="text-caption mx-auto">Position</span>
           </div>
         </v-sheet>
@@ -119,7 +148,7 @@
         </v-list>
       </v-menu>
     </div>
-  </v-app-bar>
+  </v-sheet>
 </template>
 
 <script lang="ts">
@@ -129,6 +158,8 @@ import { Component, Vue, Watch } from 'nuxt-property-decorator'
 export default class AppBar extends Vue {
   showSearch = false
   routeName: any = ''
+  profilePic: string = ''
+  userData: any = {}
 
   cart_items: NotWellDefinedObject[] = [
     {
@@ -174,10 +205,19 @@ export default class AppBar extends Vue {
       (link: NotWellDefinedObject) => link.to == this.$route.name
     )?.title
 
+    this.userData = this.$auth.currentUser
+    this.profilePic = `http://localhost:8000/${
+      this.$auth.currentUser?.settings.profilePic as string
+    }`
+
     this.$order.getPendingOrders()
   }
 
   created() {
+    this.userData = this.$auth.currentUser
+    this.profilePic = `http://localhost:8000/${
+      this.$auth.currentUser?.settings.profilePic as string
+    }`
     this.$order.getPendingOrders()
   }
 

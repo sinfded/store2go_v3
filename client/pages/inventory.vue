@@ -12,7 +12,6 @@
             elevation="0"
             rounded="lg"
             class="flex-grow-1 d-flex align-center text-subtitle-2 font-weight-regular"
-            color="accent"
           >
             <v-sheet
               class="d-flex justify-center align-center rounded-l-lg"
@@ -152,7 +151,6 @@
           class="flex-grow-1 d-flex flex-column overflow-hidden"
           width="100%"
           height="100%"
-          color="accent"
           elevation="2"
           rounded="lg"
           style="position: relative"
@@ -349,7 +347,6 @@
           <v-sheet
             v-if="selectedProducts.length > 0 && $vuetify.breakpoint.mdAndUp"
             class="flex-grow-1 d-flex px-3 align-center justify-space-between"
-            color="accent"
             rounded="lg"
             height="56"
             elevation="2"
@@ -410,7 +407,6 @@
           <v-sheet
             rounded="lg"
             elevation="2"
-            color="accent"
             height="56"
             :width="!$vuetify.breakpoint.smAndUp ? '100%' : 'auto'"
             class="d-flex justify-center align-center px-1"
@@ -429,7 +425,6 @@
         width="450"
         Cracker
         class="rounded-lg ml-4"
-        color="accent"
         elevation="1"
       ></v-sheet>
     </v-sheet>

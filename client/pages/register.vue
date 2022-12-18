@@ -21,7 +21,7 @@
           />
 
           <v-btn
-            fab
+            icon
             tile
             height="48"
             width="48"
@@ -30,11 +30,15 @@
             :class="[pricingOption == 'retail' ? 'primary' : '']"
             @click="updateOrderPricing('retail')"
           >
-            <v-icon size="28">mdi-store</v-icon>
+            <v-icon
+              size="28"
+              :color="pricingOption == 'retail' ? 'white' : 'grey darken-1'"
+              >mdi-store</v-icon
+            >
           </v-btn>
           <v-btn
-            fab
             tile
+            icon
             height="48"
             width="48"
             class="rounded-r-lg"
@@ -42,7 +46,11 @@
             :class="[pricingOption == 'wholesale' ? 'primary' : '']"
             @click="updateOrderPricing('wholesale')"
           >
-            <v-icon size="28">mdi-dolly</v-icon>
+            <v-icon
+              size="28"
+              :color="pricingOption == 'wholesale' ? 'white' : 'grey darken-1'"
+              >mdi-dolly</v-icon
+            >
           </v-btn>
           <v-btn
             @click="onProductScan"
@@ -62,7 +70,6 @@
           class="flex-grow-1 d-flex flex-column overflow-hidden"
           width="100%"
           height="100%"
-          color="accent"
           elevation="2"
           rounded="lg"
         >
@@ -171,7 +178,6 @@
           elevation="2"
           class="mt-4"
           rounded="lg"
-          color="accent"
         >
           <v-row no-gutters class="fill-height">
             <v-col cols="12" md="5" class="px-2 pt-2">
@@ -252,7 +258,6 @@
         v-if="$vuetify.breakpoint.mdAndUp"
         elevation="2"
         rounded="lg"
-        color="accent"
         width="350"
         height="100%"
         class="rounded-lg ml-4 d-flex flex-column overflow-y-auto"
@@ -505,7 +510,7 @@
                 elevation="3"
                 class="d-flex flex-column justify-center align-center"
                 style="cursor: pointer"
-                :disabled="amountPaid == 0"
+                :disabled="amountPaid == 0 || cartItems.length == 0"
               >
                 <v-sheet
                   width="56"
@@ -683,44 +688,46 @@ export default class Register extends Vue {
 
   async payOrder() {
     const currentOrderId = localStorage.getItem('currentOrderId') as string
-    const dateTime = `${new Date()
-      .toDateString()
-      .substring(4, 16)} ${new Date().toLocaleTimeString()}`
-    const paidOrder = await this.$order.payOrder(currentOrderId, {
-      status: 'fulfilled',
-      payment: {
-        method: this.selectedMethod,
-        vat: this.vat,
-        discount: this.discount,
-        amountPaid: this.amountPaid,
-        change: this.change,
-        dateTime: dateTime,
-      },
-    })
-    console.log(paidOrder)
-    if (paidOrder.status == 'fulfilled') {
-      this.paymentSuccessModal = true
-      this.transactionData = {
-        store: {
-          name: 'Lucky Savers Mini Store',
-          address: 'P-5, Alawihao, Daet, Camarines Norte',
-          tin: '916-931-669-0000',
-        },
-        cart: {
-          items: this.cartItems,
-          subtotal: this.cartSubtotal,
-          total: this.cartTotal,
-          numOfItems: this.cartItems.length,
-        },
+    if (currentOrderId) {
+      const dateTime = `${new Date()
+        .toDateString()
+        .substring(4, 16)} ${new Date().toLocaleTimeString()}`
+      const paidOrder = await this.$order.payOrder(currentOrderId, {
+        status: 'fulfilled',
         payment: {
           method: this.selectedMethod,
-          customer: this.customer,
           vat: this.vat,
           discount: this.discount,
           amountPaid: this.amountPaid,
           change: this.change,
           dateTime: dateTime,
         },
+      })
+      console.log(paidOrder)
+      if (paidOrder.status == 'fulfilled') {
+        this.paymentSuccessModal = true
+        this.transactionData = {
+          store: {
+            name: 'Lucky Savers Mini Store',
+            address: 'P-5, Alawihao, Daet, Camarines Norte',
+            tin: '916-931-669-0000',
+          },
+          cart: {
+            items: this.cartItems,
+            subtotal: this.cartSubtotal,
+            total: this.cartTotal,
+            numOfItems: this.cartItems.length,
+          },
+          payment: {
+            method: this.selectedMethod,
+            customer: this.customer,
+            vat: this.vat,
+            discount: this.discount,
+            amountPaid: this.amountPaid,
+            change: this.change,
+            dateTime: dateTime,
+          },
+        }
       }
     }
   }
@@ -830,8 +837,11 @@ export default class Register extends Vue {
   }
 
   created() {
-    this.$nuxt.$on('setCurrentOrder', (data: any) => {
-      console.log(data)
+    this.$nuxt.$on('setCurrentOrder', async (data: any) => {
+      const currentOrder = await this.$order.setCurrentOrder(data)
+      console.log(currentOrder)
+      this.cartItems = currentOrder.items
+      this.pricingOption = currentOrder.pricing
     })
   }
 

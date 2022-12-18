@@ -96,7 +96,10 @@ export class OrderPlugin implements OrderPluginImp {
   removeOrder(orderId: string): void {
     const currentOrderId = localStorage.getItem('currentOrderId') || ''
     ordersRef.child(orderId).remove()
-    if (currentOrderId == orderId) localStorage.removeItem('currentOrderId')
+    if (currentOrderId == orderId) {
+      localStorage.removeItem('currentOrderId')
+      db.auth.updateUserSettings({ currentOrderId: '' })
+    }
   }
 
   async removeOrders(orderIds: string[]) {
@@ -104,7 +107,10 @@ export class OrderPlugin implements OrderPluginImp {
     const currentOrderId = localStorage.getItem('currentOrderId') || ''
     orderIds.forEach(async (id: string) => {
       const res = await ordersRef.child(id).remove()
-      if (currentOrderId == id) localStorage.removeItem('currentOrderId')
+      if (currentOrderId == id) {
+        localStorage.removeItem('currentOrderId')
+        db.auth.updateUserSettings({ currentOrderId: '' })
+      }
       result = res.key
     })
 
@@ -171,10 +177,14 @@ export class OrderPlugin implements OrderPluginImp {
     if (orders) {
       orders.forEach((order) => {
         // this.removeOrder(order.key)
-        const id = order.key
-        const value = order.val()
+        if (order.key != 'null') {
+          const id = order.key
+          const value = order.val()
 
-        result.push({ id, ...value })
+          result.push({ id, ...value })
+        } else {
+          this.removeOrder(order.key)
+        }
       })
     } else {
       result = []
@@ -194,9 +204,11 @@ export class OrderPlugin implements OrderPluginImp {
   }
 
   async setCurrentOrder(orderId: string) {
-    console.log(orderId)
-    this.change = !this.change
-    return {}
+    const currentOrder = await this.getOrder(orderId)
+    await db.auth.updateUserSettings({ currentOrderId: orderId })
+    localStorage.setItem('currentOrderId', orderId)
+
+    return currentOrder
   }
 }
 

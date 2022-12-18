@@ -5,7 +5,6 @@
       height="100%"
       rounded="lg"
       elevation="2"
-      color="accent"
     >
       <v-row no-gutters class="fill-height">
         <v-col cols="3" xl="2" class="pa-3 pr-2">

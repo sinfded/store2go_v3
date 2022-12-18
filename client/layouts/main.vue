@@ -69,10 +69,11 @@
       </v-navigation-drawer>
       <v-main
         :class="[sideBar ? 'ml-14' : 'ml-0']"
+        class="accent"
         style="width: calc(100vw - 56px)"
       >
         <AppBar class="mt-2 mx-4" v-on:clickNavIcon="onClickNavIcon" />
-        <v-container fluid class="pa-4 ma-0" style="height: calc(100vh - 64px)">
+        <v-container fluid class="pa-4 ma-0 " style="height: calc(100vh - 64px)">
           <Nuxt :nuxtChildKey="orderId" />
         </v-container>
       </v-main>
@@ -116,19 +117,18 @@ export default class Main extends Vue {
     else this.$vuetify.theme.dark = true
   }
 
-  created() {
-    this.$nuxt.$on('setCurrentOrder', (orderId: string) => {
-      console.log(orderId)
-      this.orderId = orderId
-    })
-  }
 
-  mounted() {
+  created() {
+    // this.$nuxt.$on('setCurrentOrder', (orderId: string) => {
+    //   console.log(orderId)
+    //   this.orderId = orderId
+    // })
     const userSettings = this.$settings.getUserSettings()
     this.changePrimaryColor(
       userSettings?.primaryColor || localStorage.getItem('primaryColor')
     )
     this.changeTheme(userSettings?.theme || localStorage.getItem('theme'))
   }
+
 }
 </script>

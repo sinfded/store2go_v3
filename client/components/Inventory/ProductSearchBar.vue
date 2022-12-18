@@ -20,7 +20,6 @@
                 ? 'rounded-r-lg rounded-l-0'
                 : 'rounded-lg',
             ]"
-            background-color="accent"
             hide-details
             v-model="query"
             @keyup="search"

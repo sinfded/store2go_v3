@@ -40,7 +40,7 @@
           <v-row
             no-gutters
             justify="space-between"
-            class="mt-4 font12 border-bottom pb-1"
+            class="mt-4 font12 border-bottom pb-1 font-weight-bold"
           >
             <v-col cols="3">Desc</v-col>
             <v-col cols="3" class="text-center">Qty</v-col>
@@ -128,7 +128,7 @@
           large
           class="rounded-lg"
           color="primary"
-          ><v-icon class="mr-2"> mdi-printer </v-icon> Print
+          ><v-icon class="mr-2"> mdi-printer-pos </v-icon> Print
         </v-btn>
       </v-sheet>
     </v-card>

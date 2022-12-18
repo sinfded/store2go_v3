@@ -6,6 +6,7 @@
 import { Component, Vue } from 'nuxt-property-decorator'
 @Component({
   layout: 'main',
+  middleware: 'authenticated',
 })
 export default class Dashboard extends Vue {
   mounted() {

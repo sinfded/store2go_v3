@@ -9,6 +9,7 @@ const {
 const path = require("path");
 const { AceBaseServer } = require("acebase-server");
 const { app: express, server } = require("./server");
+const { app: client, clientServer } = require("./client");
 
 require("electron-reload")(__dirname);
 
@@ -126,6 +127,11 @@ const createTray = () => {
     menuTemplate[3].enabled = true;
     buildTrayMenu(menuTemplate);
   });
+
+  clientServer.listen(client.get("Port"), client.get("Host"), () => {
+    buildTrayMenu(menuTemplate);
+  });
+  
 };
 
 const createWindow = () => {
@@ -167,6 +173,7 @@ app.on("activate", () => {
 
 app.on("quit", () => {
   server.close();
+  clientServer.close()
 });
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.

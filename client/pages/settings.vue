@@ -1,11 +1,6 @@
 <template>
   <v-container fluid class="pa-0 ma-0 fill-height">
-    <v-sheet
-      width="100%"
-      height="100%"
-      rounded="lg"
-      elevation="2"
-    >
+    <v-sheet width="100%" height="100%" rounded="lg" elevation="2">
       <v-row no-gutters class="fill-height">
         <v-col cols="3" xl="2" class="pa-3 pr-2">
           <v-list nav dense class="pa-0" color="transparent">
@@ -26,11 +21,11 @@
           </v-list>
         </v-col>
         <v-col cols="9" xl="10" class="pa-4 pl-1 d-flex overflow-y-auto">
-          <v-divider vertical class="mr-3"></v-divider>
+          <v-divider vertical></v-divider>
           <v-tabs-items
             v-model="currentTab"
             vertical
-            class="flex-grow-1 transparent fill-height"
+            class="flex-grow-1 transparent fill-height pl-4"
           >
             <v-tab-item
               v-for="item in tabs"

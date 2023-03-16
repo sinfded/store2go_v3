@@ -79,8 +79,7 @@
             dark
           >
             <v-row no-gutters align="center">
-              <v-col v-if="$vuetify.breakpoint.lgAndUp" cols="1">SKU</v-col>
-              <v-col cols="5" lg="4">Description</v-col>
+              <v-col cols="5">Description</v-col>
               <v-col cols="2" class="text-center">Price</v-col>
               <v-col cols="3" lg="2" class="text-center">Qty.</v-col>
               <v-col cols="2" class="text-right">Subtotal</v-col>
@@ -100,10 +99,7 @@
               class="mb-2 px-3 d-flex align-content-center text-sm-subtitle-2 text-caption font-weight-medium"
             >
               <v-row no-gutters align="center">
-                <v-col v-if="$vuetify.breakpoint.lgAndUp" cols="1">{{
-                  item.sku
-                }}</v-col>
-                <v-col cols="5" lg="4" class="d-flex flex-column justify-start">
+                <v-col cols="5" class="d-flex flex-column justify-start">
                   <div class="d-flex flex-column justify-center align-start">
                     <div class="d-flex align-center">
                       <span>
@@ -118,7 +114,6 @@
                       </v-sheet>
                     </div>
                     <v-sheet
-                      v-if="$vuetify.breakpoint.mdAndDown"
                       width="100%"
                       class="d-flex grey--text mt-n1"
                       style="font-size: x-small"
@@ -260,7 +255,7 @@
         rounded="lg"
         width="350"
         height="100%"
-        class="rounded-lg ml-4 d-flex flex-column overflow-y-auto"
+        class="rounded-lg ml-4 d-flex flex-column overflow-y-auto pa-1"
       >
         <v-sheet color="transparent">
           <div class="d-flex align-center px-2 pt-2">
@@ -354,6 +349,8 @@
                   outlined
                   label="Amount"
                   dense
+                  clearable
+                  clear-icon="mdi-close-circle-outline"
                   hide-details
                   prepend-icon="mdi-currency-php"
                   class="rounded-lg mx-1"
@@ -688,15 +685,17 @@ export default class Register extends Vue {
 
   async payOrder() {
     const currentOrderId = localStorage.getItem('currentOrderId') as string
+    console.log(this.customer)
     if (currentOrderId) {
       const dateTime = `${new Date()
         .toDateString()
         .substring(4, 16)} ${new Date().toLocaleTimeString()}`
       const paidOrder = await this.$order.payOrder(currentOrderId, {
-        status: 'fulfilled',
+        status: 'paid',
         payment: {
           method: this.selectedMethod,
           vat: this.vat,
+          customer: this.customer,
           discount: this.discount,
           amountPaid: this.amountPaid,
           change: this.change,
@@ -704,7 +703,7 @@ export default class Register extends Vue {
         },
       })
       console.log(paidOrder)
-      if (paidOrder.status == 'fulfilled') {
+      if (paidOrder.status == 'paid') {
         this.paymentSuccessModal = true
         this.transactionData = {
           store: {
@@ -839,8 +838,7 @@ export default class Register extends Vue {
   created() {
     this.$nuxt.$on('setCurrentOrder', async (data: any) => {
       const currentOrder = await this.$order.setCurrentOrder(data)
-      console.log(currentOrder)
-      this.cartItems = currentOrder.items
+      this.items = currentOrder.items
       this.pricingOption = currentOrder.pricing
     })
   }
@@ -852,8 +850,8 @@ export default class Register extends Vue {
     if (currentOrderId) {
       localStorage.setItem('currentOrderId', currentOrderId)
       const currentOrder = await this.$order.getOrder(currentOrderId)
-      this.cartItems = currentOrder.items
       this.pricingOption = currentOrder.pricing
+      this.cartItems = currentOrder.items
     }
 
     const registerPage = (this.$refs['registerPage'] as Vue).$el as HTMLElement
@@ -861,6 +859,12 @@ export default class Register extends Vue {
       if (e.key === 'w') this.pricingOption = 'wholesale'
       else if (e.key === 'r') this.pricingOption = 'retail'
     })
+
+    const allCustomers = await this.$order.getAllCustomers()
+    this.customers = allCustomers.map(
+      (customer: NotWellDefinedObject) => customer.name
+    )
+    this.customers.push('Walk-in Customer')
   }
 }
 </script>

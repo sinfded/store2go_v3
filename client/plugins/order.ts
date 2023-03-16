@@ -1,15 +1,20 @@
 import { Plugin, Context } from '@nuxt/types'
 import { OrderData, OrderPluginImp, Pending } from '~/types/plugins/order'
+import { NotifierPlugin } from '~/types/plugins/notifier'
 import { db } from '~/config/acebase'
 import { NuxtAxiosInstance } from '@nuxtjs/axios'
 
 const ordersRef = db.ref('orders')
+const customersRef = db.ref('customers')
+const devicesRef = db.ref('devices')
 
 export class OrderPlugin implements OrderPluginImp {
   $axios: NuxtAxiosInstance
+  $notifier: NotifierPlugin
 
   constructor(context: Context) {
     this.$axios = context.$axios
+    this.$notifier = context.$notifier
   }
 
   public currentOrder: NotWellDefinedObject = {}
@@ -85,8 +90,23 @@ export class OrderPlugin implements OrderPluginImp {
     updateData: NotWellDefinedObject
   ): Promise<NotWellDefinedObject> {
     const { payment, status } = updateData
+    const order = await this.getOrder(orderId)
+    if (order.status == 'pending') {
+      await this.updateOrderProperty(
+        `/orders/${orderId}/fulfilledAt`,
+        Date.now()
+      )
+    }
     await this.updateOrderProperty(`/orders/${orderId}/status`, status)
     await this.updateOrderProperty(`/orders/${orderId}/payment`, payment)
+    await this.updateOrderProperty(`/orders/${orderId}/paidAt`, Date.now())
+    if (payment.customer != 'Walk-in Customer') {
+      await this.updateOrderProperty(
+        `/orders/${orderId}/customer`,
+        payment.customer
+      )
+      await this.createCustomer(payment.customer)
+    }
     await db.auth.updateUserSettings({ currentOrderId: '' })
     const updatedOrder = await this.getOrder(orderId)
 
@@ -123,13 +143,13 @@ export class OrderPlugin implements OrderPluginImp {
     return (await order).val()
   }
 
-  async getPendingOrders() {
+  async getFulfilledOrders() {
     let result: NotWellDefinedObject = {}
     let orderArray: NotWellDefinedObject[] = []
 
     const pendingOrders = db
       .query('orders')
-      .filter('status', '==', 'pending')
+      .filter('status', '==', 'fulfilled')
       .sort('createdAt', false)
     const orders = await pendingOrders.get()
     const count = await pendingOrders.count()
@@ -197,8 +217,184 @@ export class OrderPlugin implements OrderPluginImp {
     return await db.query('orders').count()
   }
 
-  async print(data: NotWellDefinedObject): Promise<any> {
-    const result = await this.$axios.post('http://localhost:8000/print', data)
+  async print(printData: NotWellDefinedObject): Promise<any> {
+    let result = null
+    const currentPrinter = db.auth.user?.settings?.printer
+    const printerData = (
+      await devicesRef
+        .query()
+        .filter('type', '==', 'printer')
+        .filter('name', '==', currentPrinter)
+        .get()
+    )[0].val()
+
+    if (printerData) {
+      const data = {
+        printData: printData,
+        printerName: printerData.name,
+        pageSize: `${printerData.pageSize}mm`,
+        pageWidth: `${printerData.pageWidth}px`,
+      }
+      result = await this.$axios.post(`/print`, data)
+    } else {
+      this.$notifier.notifierState = {
+        iconName: 'mdi-information',
+        color: 'error',
+        message: `No printer detected.`,
+      }
+    }
+
+    return result
+  }
+
+  async testPrint(printerData: NotWellDefinedObject): Promise<any> {
+    let printData: NotWellDefinedObject[] = [
+      {
+        type: 'text',
+        value: 'Test Print',
+        style: {
+          fontWeight: '700',
+          textAlign: 'center',
+          fontSize: '14px',
+          fontFamily: 'Cambria',
+        },
+      },
+      {
+        type: 'text',
+        value: 'This is a test print.',
+        style: {
+          fontSize: '11px',
+          textAlign: 'center',
+          fontWeight: '500',
+          fontFamily: 'Cambria',
+          lineHeight: 1.1,
+          width: '120px',
+          margin: 'auto',
+        },
+      },
+      {
+        type: 'table',
+        style: {
+          fontSize: '11px',
+          fontWeight: '500',
+          fontFamily: 'Cambria',
+        },
+        tableHeader: [
+          {
+            type: 'text',
+            value: 'Desc',
+            style: { textAlign: 'left', width: '40px' },
+          },
+          'Qty',
+          'Price',
+          {
+            type: 'text',
+            value: 'Amount',
+            style: { textAlign: 'right' },
+          },
+        ],
+        tableBody: [],
+        tableFooter: [],
+        tableHeaderStyle: {
+          borderBottom: '2px solid #000',
+        },
+        tableBodyStyle: {
+          borderBottom: '1px solid #fff',
+        },
+        tableFooterStyle: {},
+      },
+      {
+        type: 'text',
+        value: 'Item 1',
+        style: {
+          fontSize: '11px',
+          textAlign: 'left',
+          fontWeight: '500',
+          fontFamily: 'Cambria',
+          marginTop: '5px',
+        },
+      },
+      {
+        type: 'table',
+        style: {
+          fontSize: '11px',
+          fontWeight: '500',
+          fontFamily: 'Cambria',
+          lineHeight: 1,
+          border: 'none',
+        },
+        tableHeader: [],
+        tableBody: [
+          [
+            {
+              type: 'text',
+              value: '',
+              style: { textAlign: 'center', width: '45px' },
+            },
+            {
+              type: 'text',
+              value: '1',
+              style: { textAlign: 'center' },
+            },
+            {
+              type: 'text',
+              value: '10.00',
+              style: { textAlign: 'center' },
+            },
+            {
+              type: 'text',
+              value: '10.00',
+              style: { textAlign: 'right' },
+            },
+          ],
+        ],
+        tableFooter: [],
+        tableHeaderStyle: {},
+        tableBodyStyle: {
+          borderTop: 'none',
+        },
+        tableFooterStyle: {},
+      },
+      {
+        type: 'table',
+        style: {
+          fontSize: '11px',
+          fontWeight: '500',
+          fontFamily: 'Cambria',
+          borderTop: '2px solid #000',
+        },
+        tableHeader: [],
+        tableBody: [
+          [
+            {
+              type: 'text',
+              value: 'Subtotal',
+              style: { textAlign: 'left', width: '70px' },
+            },
+            ':',
+            {
+              type: 'text',
+              value: '10.00',
+              style: { textAlign: 'right', width: '80px' },
+            },
+          ],
+        ],
+        tableFooter: [],
+        tableHeaderStyle: {},
+        tableBodyStyle: {
+          borderBottom: 'none',
+          lineHeight: 0.5,
+        },
+        tableFooterStyle: {},
+      },
+    ]
+    const data = {
+      printData: printData,
+      printerName: printerData.name,
+      pageSize: `${printerData.pageSize}mm`,
+      pageWidth: `${printerData.pageWidth}px`,
+    }
+    const result = await this.$axios.post(`/print`, data)
 
     return result
   }
@@ -209,6 +405,38 @@ export class OrderPlugin implements OrderPluginImp {
     localStorage.setItem('currentOrderId', orderId)
 
     return currentOrder
+  }
+
+  async createCustomer(customerName: string) {
+    const customerCheck = await db
+      .query('customers')
+      .filter('name', '==', customerName)
+      .exists()
+    if (customerCheck == false) {
+      await customersRef.push({ name: customerName })
+    }
+  }
+
+  async getAllCustomers() {
+    let result: NotWellDefinedObject[] = []
+
+    const customers = await db.query('customers').get()
+
+    if (customers) {
+      customers.forEach((customer) => {
+        // this.removeOrder(customer.key)
+        if (customer.key != 'null') {
+          const id = customer.key
+          const value = customer.val()
+
+          result.push({ id, ...value })
+        }
+      })
+    } else {
+      result = []
+    }
+
+    return result
   }
 }
 

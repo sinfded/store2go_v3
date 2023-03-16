@@ -22,14 +22,6 @@
               #{{ $format.orderIdFormat(order.orderId) }}</span
             >
           </span>
-          <v-sheet
-            v-if="payment.dateTime != null"
-            height="20"
-            class="px-2 rounded-lg text-caption font-weight-bold blue--text text--darken-1 d-flex align-center text-capitalize mr-3"
-            color="blue lighten-5"
-          >
-            Paid
-          </v-sheet>
           <div class="mr-3">
             <v-sheet
               v-if="order.status == 'pending'"
@@ -41,6 +33,14 @@
             </v-sheet>
             <v-sheet
               v-else-if="order.status == 'fulfilled'"
+              height="20"
+              class="px-2 rounded-lg text-caption font-weight-bold blue--text text--darken-1 d-flex align-center text-capitalize"
+              color="blue lighten-5"
+            >
+              {{ order.status }}
+            </v-sheet>
+            <v-sheet
+              v-else-if="order.status == 'paid'"
               height="20"
               class="px-2 rounded-lg text-caption font-weight-bold green--text text--darken-1 d-flex align-center text-capitalize"
               color="green lighten-5"
@@ -71,18 +71,28 @@
           <v-btn
             v-if="payment.dateTime != null"
             height="48"
-            :width="!$vuetify.breakpoint.smAndUp ? '48' : ''"
-            class="ml-4 rounded-lg text-capitalize text-subtitle-2"
-            elevation="2"
-            dark
-            color="grey darken-1"
-            :fab="!$vuetify.breakpoint.smAndUp"
+            width="48"
+            class="rounded-lg"
+            icon
             @click="showReceipt = true"
           >
-            <v-icon :class="[$vuetify.breakpoint.smAndUp ? 'mr-2 ' : '']"
-              >mdi-receipt-text</v-icon
-            >
-            <span v-if="$vuetify.breakpoint.smAndUp">Receipt</span>
+            <v-icon>mdi-receipt-text</v-icon>
+          </v-btn>
+          <v-btn
+            @click="fulfillOrder"
+            height="48"
+            class="rounded-lg text-capitalize text-subtitle-2"
+            elevation="2"
+            color="primary"
+            :disabled="
+              cartItems.length == 0 ||
+              payment.dateTime != null ||
+              order.status == 'fulfilled'
+            "
+            ><v-icon class="mr-2" color="white">mdi-clipboard-check</v-icon>
+            <span>{{
+              order.status == 'fulfilled' ? 'Fulfilled' : 'Fulfill'
+            }}</span>
           </v-btn>
         </v-sheet>
       </v-sheet>
@@ -114,11 +124,26 @@
                 color="transparent"
               >
                 <v-row no-gutters align="center">
-                  <v-col v-if="$vuetify.breakpoint.lgAndUp" cols="1">SKU</v-col>
-                  <v-col cols="5" lg="4">Description</v-col>
-                  <v-col cols="2" class="text-center">Price</v-col>
-                  <v-col cols="3" lg="2" class="text-center">Qty.</v-col>
-                  <v-col cols="2" class="text-right">Subtotal</v-col>
+                  <v-col cols="5">Description</v-col>
+                  <v-col
+                    v-if="order.status == 'paid'"
+                    cols="2"
+                    class="text-center"
+                    >Price</v-col
+                  >
+                  <v-col cols="3" class="text-center">Qty.</v-col>
+                  <v-col
+                    v-if="order.status == 'paid'"
+                    cols="2"
+                    class="text-right"
+                    >Subtotal</v-col
+                  >
+                  <v-col
+                    v-if="order.status != 'paid'"
+                    cols="4"
+                    class="text-center"
+                    >Price</v-col
+                  >
                 </v-row>
               </v-sheet>
               <v-divider class="mx-2"></v-divider>
@@ -136,14 +161,7 @@
                   class="mb-2 px-3 d-flex align-content-center text-sm-subtitle-2 text-caption font-weight-medium"
                 >
                   <v-row no-gutters align="center">
-                    <v-col v-if="$vuetify.breakpoint.lgAndUp" cols="1">{{
-                      item.sku
-                    }}</v-col>
-                    <v-col
-                      cols="5"
-                      lg="4"
-                      class="d-flex flex-column justify-start"
-                    >
+                    <v-col cols="5" class="d-flex flex-column justify-start">
                       <div
                         class="d-flex flex-column justify-center align-start"
                       >
@@ -160,7 +178,6 @@
                           </v-sheet>
                         </div>
                         <v-sheet
-                          v-if="$vuetify.breakpoint.mdAndDown"
                           width="100%"
                           class="d-flex grey--text mt-n1"
                           style="font-size: x-small"
@@ -170,21 +187,107 @@
                         </v-sheet>
                       </div>
                     </v-col>
-                    <v-col cols="2" class="text-center">{{
-                      $format.currencyFormat(item.price)
-                    }}</v-col>
-                    <v-col cols="3" lg="2">
+                    <v-col
+                      v-if="order.status == 'paid'"
+                      cols="2"
+                      class="text-center"
+                      ><span>{{
+                        $format.currencyFormat(item.price || 0)
+                      }}</span>
+                    </v-col>
+                    <v-col cols="3">
                       <v-sheet
                         width="80"
                         max-width="100%"
                         class="d-flex justify-center align-center mx-auto"
                       >
-                        <span>{{ item.quantity }}</span>
+                        <v-sheet
+                          width="80"
+                          max-width="100%"
+                          class="d-flex align-center mx-auto"
+                          :class="[
+                            order.status == 'pending'
+                              ? 'justify-space-between'
+                              : 'justify-center',
+                          ]"
+                        >
+                          <v-btn
+                            v-if="order.status == 'pending'"
+                            tile
+                            fab
+                            :dark="item.quantity == 1"
+                            elevation="1"
+                            height="24"
+                            width="24"
+                            class="rounded"
+                            :class="[item.quantity == 1 ? 'red lighten-1' : '']"
+                            @click="decreaseQty(item)"
+                          >
+                            <v-icon v-if="item.quantity > 1" small
+                              >mdi-minus</v-icon
+                            >
+                            <v-icon v-else small>mdi-trash-can-outline</v-icon>
+                          </v-btn>
+                          <span>{{ item.quantity }}</span>
+                          <v-btn
+                            v-if="order.status == 'pending'"
+                            tile
+                            fab
+                            elevation="1"
+                            height="24"
+                            width="24"
+                            class="rounded"
+                            @click="increaseQty(item)"
+                          >
+                            <v-icon small>mdi-plus</v-icon>
+                          </v-btn>
+                        </v-sheet>
                       </v-sheet>
                     </v-col>
-                    <v-col cols="2" class="text-right">{{
-                      $format.currencyFormat(item.subtotal)
-                    }}</v-col>
+                    <v-col
+                      v-if="order.status == 'paid'"
+                      cols="2"
+                      class="text-right"
+                      >{{ $format.currencyFormat(item.subtotal) }}</v-col
+                    >
+                    <v-col v-if="order.status != 'paid'" cols="4">
+                      <div class="d-flex align-center justify-center">
+                        <v-sheet
+                          class="d-flex flex-column px-2 py-1 blue--text text--darken-1 rounded-lg mx-1"
+                          color="blue lighten-5"
+                          height="auto"
+                          width="80"
+                        >
+                          <span style="font-size: x-small; line-height: 1"
+                            >Wholesale</span
+                          >
+                          <span
+                            class="text-caption mt-1 font-weight-medium text-center"
+                            style="line-height: 1"
+                            >{{
+                              $format.currencyFormat(item.price.wholesale)
+                            }}</span
+                          >
+                        </v-sheet>
+                        <v-sheet
+                          class="d-flex flex-column px-2 py-1 red--text text--darken-1 rounded-lg mx-1"
+                          color="red lighten-5"
+                          height="auto"
+                          width="80"
+                        >
+                          <span style="font-size: x-small; line-height: 1"
+                            >Retail</span
+                          >
+                          <span
+                            class="text-caption mt-1 font-weight-medium text-center"
+                            style="line-height: 1"
+                            >{{
+                              $format.currencyFormat(item.price.retail)
+                            }}</span
+                          >
+                        </v-sheet>
+                      </div>
+                    </v-col>
                   </v-row>
                 </v-sheet>
               </v-sheet>
@@ -232,55 +335,145 @@
             </v-row>
           </v-sheet>
         </v-sheet>
-        <v-sheet
-          width="350"
-          height="100%"
-          elevation="2"
-          rounded="lg"
-          class="px-4 py-2"
-        >
-          <v-sheet color="transparent">
-            <span class="text-subtitle-1 font-weight-medium">Activity</span>
-            <v-sheet class="pa-3 d-flex mt-2" elevation="1" rounded="lg">
+        <v-sheet height="100%" color="transparent" class="d-flex flex-column">
+          <v-sheet
+            width="350"
+            elevation="2"
+            rounded="lg"
+            class="px-4 py-2 mb-4"
+          >
+            <v-sheet color="transparent">
+              <span class="text-subtitle-1 font-weight-medium">Customer</span>
               <v-sheet
-                class="text-subtitle-2 d-flex flex-column mr-2"
-                min-width="83"
+                class="mt-2 d-flex flex-column justify-center align-center text-subtitle-2"
+                color="transparent"
               >
-                <span>{{ getTimeline(order.createdAt).date }}</span>
-                <span class="text-caption">{{
-                  getTimeline(order.createdAt).time
-                }}</span>
-              </v-sheet>
-              <v-divider vertical></v-divider>
-              <div class="ml-2 flex-grow-1 d-flex flex-column">
-                <span class="text-subtitle-2 font-weight-medium primary--text"
-                  >Order created.</span
+                <v-avatar color="grey" size="120" class="mx-auto">
+                  <v-img :src="customer.profilePic"></v-img>
+                </v-avatar>
+                <span class="grey--text text--darken-3 mt-2">
+                  {{ customer.name }}
+                </span>
+                <span
+                  class="grey--text text--darken-1 text-caption font-weight-medium mt-n1"
                 >
-              </div>
+                  {{ customer.address }}
+                </span>
+              </v-sheet>
+              <v-sheet color="transparent">
+                <span
+                  class="text-subtitle-2 font-weight-medium grey--text text--darken-3"
+                  >Past Orders</span
+                >
+                <v-simple-table dense height="110" fixed-header>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">Date</th>
+                        <th class="text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(order, index) in pastOrders" :key="index">
+                        <td
+                          class="text-caption font-weight-medium grey--text text--darken-2"
+                        >
+                          {{ order.date }}
+                        </td>
+                        <td
+                          class="text-right text-caption font-weight-medium grey--text text--darken-2"
+                        >
+                          {{ $format.currencyFormat(order.amount) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+              </v-sheet>
             </v-sheet>
-            <v-sheet
-              v-if="payment.dateTime"
-              class="pa-3 d-flex mt-2"
-              elevation="1"
-              rounded="lg"
-            >
-              <v-sheet
-                class="text-subtitle-2 d-flex flex-column mr-2"
-                min-width="83"
+          </v-sheet>
+          <v-sheet
+            width="350"
+            elevation="2"
+            rounded="lg"
+            class="px-2 py-2 flex-grow-1"
+          >
+            <v-sheet color="transparent">
+              <span class="text-subtitle-1 font-weight-medium px-2"
+                >Activity</span
               >
-                <span>{{ getTimeline(payment.dateTime).date }}</span>
-                <span class="text-caption">{{
-                  getTimeline(payment.dateTime).time
-                }}</span>
-              </v-sheet>
-              <v-divider vertical></v-divider>
-              <div class="ml-2 flex-grow-1 d-flex flex-column">
-                <p
-                  class="text-subtitle-2 font-weight-medium primary--text mb-0"
+              <v-sheet
+                width="100%"
+                max-height="222"
+                class="overflow-y-auto px-2 mt-1 py-1"
+              >
+                <v-sheet class="pa-3 d-flex" elevation="1" rounded="lg">
+                  <v-sheet
+                    class="text-subtitle-2 d-flex flex-column mr-2"
+                    min-width="83"
+                  >
+                    <span>{{ getTimeline(order.createdAt).date }}</span>
+                    <span class="text-caption">{{
+                      getTimeline(order.createdAt).time
+                    }}</span>
+                  </v-sheet>
+                  <v-divider vertical></v-divider>
+                  <div class="ml-2 flex-grow-1 d-flex flex-column">
+                    <span
+                      class="text-subtitle-2 font-weight-medium primary--text"
+                      >Order created.</span
+                    >
+                  </div>
+                </v-sheet>
+                <v-sheet
+                  v-if="order.fulfilledAt"
+                  class="pa-3 d-flex mt-2"
+                  elevation="1"
+                  rounded="lg"
                 >
-                  Order had been fulfilled and paid.
-                </p>
-              </div>
+                  <v-sheet
+                    class="text-subtitle-2 d-flex flex-column mr-2"
+                    min-width="83"
+                  >
+                    <span>{{ getTimeline(order.fulfilledAt).date }}</span>
+                    <span class="text-caption">{{
+                      getTimeline(order.fulfilledAt).time
+                    }}</span>
+                  </v-sheet>
+                  <v-divider vertical></v-divider>
+                  <div class="ml-2 flex-grow-1 d-flex flex-column">
+                    <p
+                      class="text-subtitle-2 font-weight-medium primary--text mb-0"
+                    >
+                      Order had been fulfilled.
+                    </p>
+                  </div>
+                </v-sheet>
+                <v-sheet
+                  v-if="payment.dateTime"
+                  class="pa-3 d-flex mt-2"
+                  elevation="1"
+                  rounded="lg"
+                >
+                  <v-sheet
+                    class="text-subtitle-2 d-flex flex-column mr-2"
+                    min-width="83"
+                  >
+                    <span>{{ getTimeline(payment.dateTime).date }}</span>
+                    <span class="text-caption">{{
+                      getTimeline(payment.dateTime).time
+                    }}</span>
+                  </v-sheet>
+                  <v-divider vertical></v-divider>
+                  <div class="ml-2 flex-grow-1 d-flex flex-column">
+                    <p
+                      class="text-subtitle-2 font-weight-medium primary--text mb-0"
+                    >
+                      Order had been paid.
+                    </p>
+                  </div>
+                </v-sheet>
+              </v-sheet>
             </v-sheet>
           </v-sheet>
         </v-sheet>
@@ -297,6 +490,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'nuxt-property-decorator'
+import { format } from 'path'
 import ReceiptModal from '~/components/Modals/ReceiptModal.vue'
 
 @Component({
@@ -320,6 +514,21 @@ export default class OrderPage extends Vue {
   receiptData: NotWellDefinedObject = {}
 
   showReceipt = false
+  customer: NotWellDefinedObject = {
+    name: 'Test Customer',
+    profilePic:
+      'https://cdn2.iconfinder.com/data/icons/avatars-99/62/avatar-370-456322-512.png',
+    address: 'Test Address',
+  }
+
+  get pastOrders() {
+    const pastOrders = [
+      { date: '12/25/2023', amount: 7.5 },
+      { date: '12/30/2023', amount: 22.5 },
+      { date: '12/30/2023', amount: 22.5 },
+    ]
+    return pastOrders
+  }
 
   get numOfItems() {
     if (this.order.items == undefined) return 0
@@ -374,22 +583,77 @@ export default class OrderPage extends Vue {
     return { date, time }
   }
 
+  updateOrderItems() {
+    const currentOrderId = this.$route.params.orderId
+    if (currentOrderId) {
+      this.$order.updateOrderProperty(
+        `/orders/${currentOrderId}/items`,
+        this.cartItems
+      )
+    }
+  }
+
+  increaseQty(item: NotWellDefinedObject) {
+    this.order.items = this.order.items.map((i: NotWellDefinedObject) => {
+      if (i.id == item.id) {
+        i.quantity = item.quantity + 1
+      }
+      return i
+    })
+    this.updateOrderItems()
+  }
+
+  decreaseQty(item: NotWellDefinedObject) {
+    if (item.quantity > 1) {
+      this.order.items = this.order.items.map((i: NotWellDefinedObject) => {
+        if (i.id == item.id) {
+          i.quantity = item.quantity - 1
+        }
+        return i
+      })
+    } else {
+      this.order.items = this.order.items.filter(
+        (i: NotWellDefinedObject) => i.id != item.id
+      )
+    }
+
+    this.updateOrderItems()
+  }
+
+  async fulfillOrder() {
+    console.log('Fulfill')
+    const currentOrderId = this.$route.params.orderId
+    await this.$order.updateOrderProperty(
+      `/orders/${currentOrderId}/status`,
+      'fulfilled'
+    )
+    await this.$order.updateOrderProperty(
+      `/orders/${currentOrderId}/fulfilledAt`,
+      Date.now()
+    )
+    this.order = await this.$order.getOrder(this.$route.params.orderId)
+  }
+
   async created() {
     this.order = await this.$order.getOrder(this.$route.params.orderId)
-    this.payment = this.order.payment || {}
-    this.receiptData = {
-      store: {
-        name: 'Lucky Savers Mini Store',
-        address: 'P-5, Alawihao, Daet, Camarines Norte',
-        tin: '916-931-669-0000',
-      },
-      cart: {
-        items: this.order.items,
-        subtotal: this.subtotal,
-        total: this.totalPaid,
-        numOfItems: this.order.items.length,
-      },
-      payment: this.payment,
+    console.log(this.order)
+    if (this.order.payment) {
+      this.customer.name = this.order.payment.customer
+      this.payment = this.order.payment || {}
+      this.receiptData = {
+        store: {
+          name: 'Lucky Savers Mini Store',
+          address: 'P-5, Alawihao, Daet, Camarines Norte',
+          tin: '916-931-669-0000',
+        },
+        cart: {
+          items: this.order.items,
+          subtotal: this.subtotal,
+          total: this.totalPaid,
+          numOfItems: this.order.items.length,
+        },
+        payment: this.payment,
+      }
     }
   }
 }

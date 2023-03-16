@@ -38,25 +38,24 @@
           </v-btn>
         </template>
         <v-sheet class="pa-2 pb-0 text-subtitle-2" width="100%">
-          <span class="px-2">Pending Orders</span>
+          <span class="px-2">Fulfilled Orders</span>
           <v-divider class="mt-1"></v-divider>
         </v-sheet>
         <v-list
-          v-if="$order.pendingOrders.count > 0"
+          v-if="fulfilledOrders.count > 0"
           dense
           :width="300"
           class="pa-0"
           elevation="0"
         >
           <v-list-item
-            v-for="(order, index) in $order.pendingOrders.orders"
+            v-for="(order, index) in fulfilledOrders.orders"
             :key="index"
           >
             <v-list-item-content>
               <v-list-item-title>
                 <v-sheet class="d-flex justify-space-between">
                   <span>Order #{{ $format.orderIdFormat(order.orderId) }}</span>
-                  <span>{{ $format.currencyFormat(order.subTotal) }}</span>
                 </v-sheet>
               </v-list-item-title>
               <v-list-item-subtitle
@@ -89,7 +88,7 @@
               <v-sheet
                 class="d-flex justify-center text-caption font-italic grey--text"
               >
-                <span>No pending orders.</span>
+                <span>No fulfilled orders.</span>
               </v-sheet>
             </v-list-item-content>
           </v-list-item>
@@ -160,6 +159,7 @@ export default class AppBar extends Vue {
   routeName: any = ''
   profilePic: string = ''
   userData: any = {}
+  fulfilledOrders: NotWellDefinedObject = {}
 
   cart_items: NotWellDefinedObject[] = [
     {
@@ -200,7 +200,7 @@ export default class AppBar extends Vue {
     this.$auth.signOut()
   }
 
-  mounted() {
+  async mounted() {
     this.routeName = this.links.find(
       (link: NotWellDefinedObject) => link.to == this.$route.name
     )?.title
@@ -210,15 +210,7 @@ export default class AppBar extends Vue {
       this.$auth.currentUser?.settings.profilePic as string
     }`
 
-    this.$order.getPendingOrders()
-  }
-
-  created() {
-    this.userData = this.$auth.currentUser
-    this.profilePic = `http://localhost:8000/${
-      this.$auth.currentUser?.settings.profilePic as string
-    }`
-    this.$order.getPendingOrders()
+    this.fulfilledOrders = await this.$order.getFulfilledOrders()
   }
 
   setCurrentOrder(orderId: string) {
@@ -228,12 +220,12 @@ export default class AppBar extends Vue {
   }
 
   @Watch('$route')
-  onRouteChange() {
+  async onRouteChange() {
     this.routeName = this.links.find(
       (link: NotWellDefinedObject) => link.to == this.$route.name
     )?.title
 
-    this.$order.getPendingOrders()
+    this.fulfilledOrders = await this.$order.getFulfilledOrders()
   }
 }
 </script>

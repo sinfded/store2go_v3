@@ -1,7 +1,7 @@
 import { AceBaseClient } from 'acebase-client'
 
 const db = new AceBaseClient({
-  host: 'localhost',
+  host: '127.0.0.1',
   port: 5757,
   dbname: 'store2go',
   https: false,

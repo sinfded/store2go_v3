@@ -6,8 +6,9 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const multer = require("multer");
 const { PosPrinter } = require("electron-pos-printer");
+const {BrowserWindow} = require('electron')
 
-const host = "0.0.0.0";
+const host = "localhost";
 const port = 8000;
 
 // const upload = multer({
@@ -56,6 +57,22 @@ app.post("/print", (req, res) => {
     console.log(e);
   }
 });
+
+app.get('/printers', async (req,res) => {
+  const win = new BrowserWindow({
+    show: false,
+    autoHideMenuBar: true
+  })
+
+  const printers = await win.webContents.getPrintersAsync()
+  console.log(printers);
+
+  if(printers) {
+    res.json({status: 'done', result: printers})
+  } else {
+    res.json({status:'fail', result: []})
+  }
+})
 
 // Serve the uploaded files
 app.use("/uploads", express.static("./uploads"));

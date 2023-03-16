@@ -169,12 +169,26 @@
               class="ma-0 mt-n1 mr-2"
             ></v-checkbox>
             <v-row no-gutters align="center">
-              <v-col v-if="$vuetify.breakpoint.lgAndUp" cols="1">SKU</v-col>
-              <v-col cols="5">Description</v-col>
-              <v-col cols="1" class="text-center">Category</v-col>
-              <v-col cols="2" class="text-center">Supplier</v-col>
-              <v-col cols="1" class="text-center">Stock</v-col>
-              <v-col cols="3" lg="2" class="text-center">Price</v-col>
+              <v-col cols="8" md="4">Description</v-col>
+              <v-col
+                v-if="$vuetify.breakpoint.mdAndUp"
+                cols="2"
+                class="text-center"
+                >Category</v-col
+              >
+              <v-col
+                v-if="$vuetify.breakpoint.mdAndUp"
+                cols="2"
+                class="text-center"
+                >Supplier</v-col
+              >
+              <v-col
+                v-if="$vuetify.breakpoint.mdAndUp"
+                cols="1"
+                class="text-center"
+                >Stock</v-col
+              >
+              <v-col cols="3" class="text-center">Price</v-col>
             </v-row>
           </v-sheet>
           <v-sheet
@@ -198,11 +212,9 @@
                 @change="selectProduct(product.id)"
               ></v-checkbox>
               <v-row no-gutters align="center">
-                <v-col v-if="$vuetify.breakpoint.lgAndUp" cols="1">{{
-                  product.sku
-                }}</v-col>
                 <v-col
-                  cols="5"
+                  cols="8"
+                  md="4"
                   class="d-flex flex-column justify-center align-start"
                 >
                   <div class="d-flex align-center">
@@ -220,29 +232,34 @@
                     </v-sheet>
                   </div>
                   <span
-                    v-if="$vuetify.breakpoint.mdAndDown"
                     class="grey--text mt-n1 text-caption font-weight-medium"
                     >{{ product.sku }}</span
                   >
                 </v-col>
-                <v-col cols="1" class="text-center">{{
-                  product.category
-                }}</v-col>
-                <v-col cols="2" class="text-center">{{
-                  product.supplier
-                }}</v-col>
-                <v-col cols="1" class="text-center">
+                <v-col
+                  v-if="$vuetify.breakpoint.mdAndUp"
+                  cols="2"
+                  class="text-center"
+                  >{{ product.category }}</v-col
+                >
+                <v-col
+                  v-if="$vuetify.breakpoint.mdAndUp"
+                  cols="2"
+                  class="text-center"
+                  >{{ product.supplier }}</v-col
+                >
+                <v-col
+                  v-if="$vuetify.breakpoint.mdAndUp"
+                  cols="1"
+                  class="text-center"
+                >
                   <span>{{ $format.numberFormat(product.stock, 1) }}</span>
                 </v-col>
                 <!-- <v-col cols="3" lg="2" class="text-center"
                   >W: {{ $format.currencyFormat(product.price.wholesale) }} / R:
                   {{ $format.currencyFormat(product.price.retail) }}</v-col
                 > -->
-                <v-col
-                  cols="3"
-                  lg="2"
-                  class="d-flex align-center justify-center"
-                >
+                <v-col cols="3" class="d-flex align-center justify-center">
                   <v-sheet
                     class="d-flex flex-column px-2 py-1 blue--text text--darken-1 rounded-lg mx-1"
                     color="blue lighten-5"
@@ -420,13 +437,13 @@
           </v-sheet>
         </v-sheet>
       </v-sheet>
-      <v-sheet
+      <!-- <v-sheet
         v-if="$vuetify.breakpoint.lgAndUp"
         width="450"
         Cracker
         class="rounded-lg ml-4"
         elevation="1"
-      ></v-sheet>
+      ></v-sheet> -->
     </v-sheet>
     <ProductModal
       v-if="productModal.modal"

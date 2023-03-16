@@ -13,122 +13,6 @@
             rounded="lg"
             class="flex-grow-1 d-flex align-center text-subtitle-2 font-weight-regular"
           >
-            <!-- <v-sheet
-              class="d-flex justify-center align-center rounded-l-lg"
-              :class="[$vuetify.breakpoint.smAndUp ? 'px-3' : 'px-2']"
-              color="transparent"
-              height="100%"
-              elevation="2"
-            >
-              <v-sheet
-                v-if="$vuetify.breakpoint.smAndUp"
-                class="mr-2 text-subtitle-2 grey--text text--darken-1"
-                color="transparent"
-                >Filter</v-sheet
-              >
-
-              <v-menu
-                v-model="filter.show"
-                :close-on-content-click="false"
-                :nudge-bottom="20"
-                :nudge-left="60"
-                offset-y
-              >
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn
-                    icon
-                    class="rounded"
-                    elevation="0"
-                    color="primary"
-                    v-bind="attrs"
-                    v-on="on"
-                  >
-                    <v-icon>mdi-tune-vertical</v-icon>
-                  </v-btn
-                </template>
-
-                <v-card rounded="lg" width="250">
-                  <v-sheet
-                    class="pa-2 pb-0 text-subtitle-2 grey--text text--darken-2"
-                    width="100%"
-                  >
-                    <span class="px-1">Filter By</span>
-                    <v-divider class="mt-1"></v-divider>
-                  </v-sheet>
-                  <v-sheet
-                    class="pa-2 pb-0 text-subtitle-2 grey--text text--darken-2"
-                    width="100%"
-                  >
-                    <span class="px-1">Brand</span>
-                    <v-combobox
-                      v-model="filter.brand"
-                      :items="brands"
-                      placeholder="Select a brand"
-                      outlined
-                      hide-details
-                      dense
-                      class="rounded-lg text-subtitle-2 font-weight-regular mt-1 mx-1"
-                    ></v-combobox>
-
-                    <v-divider class="mt-3"></v-divider>
-                  </v-sheet>
-                  <v-sheet
-                    class="pa-2 pb-0 text-subtitle-2 grey--text text--darken-2"
-                    width="100%"
-                  >
-                    <span class="px-1">Category</span>
-                    <v-combobox
-                      v-model="filter.category"
-                      :items="categories"
-                      placeholder="Select a category"
-                      outlined
-                      hide-details
-                      dense
-                      class="rounded-lg text-subtitle-2 font-weight-regular mt-1 mx-1"
-                    ></v-combobox>
-
-                    <v-divider class="mt-3"></v-divider>
-                  </v-sheet>
-                  <v-sheet
-                    class="pa-2 pb-0 text-subtitle-2 grey--text text--darken-2"
-                    width="100%"
-                  >
-                    <span class="px-1">Supplier</span>
-                    <v-combobox
-                      v-model="filter.supplier"
-                      :items="supplier"
-                      placeholder="Select a supplier"
-                      outlined
-                      hide-details
-                      dense
-                      class="rounded-lg text-subtitle-2 font-weight-regular mt-1 mx-1"
-                    ></v-combobox>
-
-                    <v-divider class="mt-3"></v-divider>
-                  </v-sheet>
-                  <v-sheet
-                    class="pa-3 text-subtitle-2 d-flex justify-end"
-                    width="100%"
-                  >
-                    <v-btn
-                      @click="filterProducts"
-                      class="rounded-lg text-capitalize mr-2"
-                      color="primary"
-                    >
-                      Apply
-                    </v-btn>
-                    <v-btn
-                      @click="filterReset"
-                      class="rounded-lg text-capitalize"
-                      depressed
-                    >
-                      Reset
-                    </v-btn>
-                  </v-sheet>
-                </v-card>
-              </v-menu>
-            </v-sheet> -->
-            <!-- <v-divider vertical></v-divider> -->
             <ProductSearchBar />
           </v-sheet>
           <v-btn
@@ -164,7 +48,6 @@
               hide-details
               :value="selectedOrders.length > 0"
               :indeterminate="selectedOrders.length > 0"
-              :disabled="selectedOrders.length < 1"
               @change="emptySelected"
               class="ma-0 mt-n1 mr-2"
             ></v-checkbox>
@@ -200,6 +83,14 @@
               <v-row no-gutters align="center">
                 <v-col cols="2" md="1">
                   <nuxt-link
+                    v-if="order.id == currentOrderId"
+                    to="/register"
+                    class="text-decoration-none"
+                  >
+                    #{{ $format.orderIdFormat(order.orderId) }}
+                  </nuxt-link>
+                  <nuxt-link
+                    v-else
                     :to="`/orders/${order.id}`"
                     class="text-decoration-none"
                   >
@@ -229,8 +120,17 @@
                   <v-sheet
                     v-else-if="order.status == 'fulfilled'"
                     height="20"
+                    class="pr-2 rounded-lg text-caption font-weight-bold blue--text text--darken-1 d-flex align-center text-capitalize"
+                    color="blue lighten-5"
+                  >
+                    <v-icon color="blue" size="20">mdi-circle-medium</v-icon>
+                    {{ order.status }}
+                  </v-sheet>
+                  <v-sheet
+                    v-else-if="order.status == 'paid'"
+                    height="20"
                     class="pr-2 rounded-lg text-caption font-weight-bold green--text text--darken-1 d-flex align-center text-capitalize"
-                    color="green lighten-5"
+                    color="blue lighten-5"
                   >
                     <v-icon color="green" size="20">mdi-circle-medium</v-icon>
                     {{ order.status }}
@@ -267,7 +167,7 @@
                   md="3"
                   class="d-flex align-center justify-center"
                 >
-                  {{ $format.currencyFormat(getSubtotal(order)) }}
+                  {{ $format.currencyFormat(getSubtotal(order) || 0) }}
                 </v-col>
               </v-row>
             </v-sheet>
@@ -372,24 +272,16 @@
             </div>
             <div>
               <v-btn
-                class="rounded-lg text-capitalize white--text text-subtitle-2"
-                color="blue lighten-1"
-                :disabled="selectedOrders.length > 1"
-              >
-                <v-icon class="ml-n2 mr-2">mdi-content-copy</v-icon> Clone
-              </v-btn>
-              <v-btn
                 class="rounded-lg text-capitalize ml-2 white--text text-subtitle-2"
-                color="green lighten-1"
-                :disabled="selectedOrders.length > 1"
+                color="grey darken-1"
               >
-                <v-icon class="ml-n2 mr-2">mdi-pencil-outline</v-icon> Edit
+                <v-icon class="ml-n2 mr-2">mdi-file-document</v-icon> Report
               </v-btn>
               <v-btn
                 dark
                 class="rounded-lg text-capitalize ml-2 text-subtitle-2"
                 color="red lighten-1"
-                @click="$order.removeOrders(selectedOrders)"
+                @click="deleteModal = true"
               >
                 <v-icon class="ml-n2 mr-2">mdi-trash-can-outline</v-icon> Delete
               </v-btn>
@@ -421,6 +313,11 @@
       ></v-sheet>
     </v-sheet>
     <OrderModal :orderModal="orderModal.modal" v-on:closeModal="refreshTable" />
+    <DeleteModal
+      :deleteModal="deleteModal"
+      v-on:closeModal="deleteModal = false"
+      v-on:confirmDelete="onConfirmDelete"
+    />
   </v-container>
 </template>
 
@@ -428,6 +325,7 @@
 import { Component, Vue, Watch } from 'nuxt-property-decorator'
 import ProductSearchBar from '~/components/Inventory/ProductSearchBar.vue'
 import OrderModal from '~/components/Modals/OrderModal.vue'
+import DeleteModal from '~/components/Modals/DeleteModal.vue'
 
 @Component({
   layout: 'main',
@@ -435,6 +333,7 @@ import OrderModal from '~/components/Modals/OrderModal.vue'
   components: {
     ProductSearchBar,
     OrderModal,
+    DeleteModal,
   },
 })
 export default class OrdersPage extends Vue {
@@ -451,6 +350,7 @@ export default class OrdersPage extends Vue {
     method: '',
   }
   optionBtn = false
+  deleteModal = false
 
   filter: NotWellDefinedObject = {
     show: false,
@@ -508,7 +408,13 @@ export default class OrdersPage extends Vue {
   }
 
   emptySelected() {
-    this.selectedOrders = []
+    if (this.selectedOrders.length > 0) {
+      this.selectedOrders = []
+    } else {
+      this.selectedOrders = this.orders.map(
+        (order: NotWellDefinedObject) => order.id
+      )
+    }
   }
 
   checkSelected(id: string) {
@@ -529,9 +435,15 @@ export default class OrdersPage extends Vue {
   refreshTable() {
     this.emptySelected()
     this.getOrders()
-    this.$order.getPendingOrders()
+    this.$order.getFulfilledOrders()
     this.selectedOrders = []
+    this.deleteModal = false
     this.orderModal.modal = false
+  }
+
+  onConfirmDelete() {
+    this.$order.removeOrders(this.selectedOrders)
+    this.refreshTable()
   }
 
   async getOrders() {

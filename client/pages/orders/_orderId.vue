@@ -113,7 +113,10 @@
             elevation="2"
             rounded="lg"
           >
-            <span class="text-subtitle-1 font-weight-medium px-2">Cart</span>
+            <span
+              class="text-subtitle-1 font-weight-medium px-2 grey--text text--darken-2"
+              >Cart</span
+            >
             <v-sheet
               class="flex-grow-1 d-flex flex-column overflow-hidden"
               width="100%"
@@ -294,7 +297,8 @@
             </v-sheet>
           </v-sheet>
           <v-sheet width="100%" elevation="2" rounded="lg" class="px-4 py-2">
-            <span class="text-subtitle-1 font-weight-medium"
+            <span
+              class="text-subtitle-1 font-weight-medium grey--text text--darken-2"
               >Payment Summary</span
             >
             <v-row no-gutters class="text-subtitle-2 mt-2">
@@ -343,7 +347,10 @@
             class="px-4 py-2 mb-4"
           >
             <v-sheet color="transparent">
-              <span class="text-subtitle-1 font-weight-medium">Customer</span>
+              <span
+                class="text-subtitle-1 font-weight-medium grey--text text--darken-2"
+                >Customer</span
+              >
               <v-sheet
                 class="mt-2 d-flex flex-column justify-center align-center text-subtitle-2"
                 color="transparent"
@@ -399,7 +406,8 @@
             class="px-2 py-2 flex-grow-1"
           >
             <v-sheet color="transparent">
-              <span class="text-subtitle-1 font-weight-medium px-2"
+              <span
+                class="text-subtitle-1 font-weight-medium px-2 grey--text text--darken-2"
                 >Activity</span
               >
               <v-sheet

@@ -15,7 +15,19 @@
       <v-icon> mdi-menu </v-icon>
     </v-btn>
     <v-sheet class="py-2 rounded" color="transparent">
+      <v-btn
+        plain
+        icon
+        :height="40"
+        :width="40"
+        v-if="!routeName"
+        @click="goBack"
+        class="ml-n2"
+      >
+        <v-icon large>mdi-chevron-left</v-icon>
+      </v-btn>
       <span
+        v-else
         class="font-weight-bold"
         :class="[$vuetify.theme.dark ? '' : 'grey--text text--darken-2']"
         style="font-size: larger"
@@ -217,6 +229,10 @@ export default class AppBar extends Vue {
     // console.log(this.$order.setCurrentOrder(orderId))
     // console.log(this.$order.change)
     this.$nuxt.$emit('setCurrentOrder', orderId)
+  }
+
+  goBack() {
+    this.$router.push('/orders')
   }
 
   @Watch('$route')

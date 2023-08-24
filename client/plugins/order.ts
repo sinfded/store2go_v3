@@ -36,7 +36,14 @@ export class OrderPlugin implements OrderPluginImp {
   async createOrder(
     orderItems: NotWellDefinedObject[]
   ): Promise<NotWellDefinedObject> {
-    const orderId = (await ordersRef.count()) + 1
+    let orderId = (await ordersRef.count()) + 1
+    const idCheck = await db
+      .query('orders')
+      .filter('orderId', '==', orderId)
+      .exists()
+    if (idCheck) {
+      orderId = orderId + 1
+    }
     const orderRef = await ordersRef.push({
       orderId: orderId,
       items: orderItems,
@@ -55,7 +62,14 @@ export class OrderPlugin implements OrderPluginImp {
   async newOrder(
     orderItems: NotWellDefinedObject[]
   ): Promise<NotWellDefinedObject> {
-    const orderId = (await ordersRef.count()) + 1
+    let orderId = (await ordersRef.count()) + 1
+    const idCheck = await db
+      .query('orders')
+      .filter('orderId', '==', orderId)
+      .exists()
+    if (idCheck) {
+      orderId = orderId + 1
+    }
     const orderRef = await ordersRef.push({
       orderId: orderId,
       items: orderItems,
@@ -122,19 +136,15 @@ export class OrderPlugin implements OrderPluginImp {
     }
   }
 
-  async removeOrders(orderIds: string[]) {
-    let result: string = ''
+  removeOrders(orderIds: string[]): void {
     const currentOrderId = localStorage.getItem('currentOrderId') || ''
     orderIds.forEach(async (id: string) => {
-      const res = await ordersRef.child(id).remove()
+      await ordersRef.child(id).remove()
       if (currentOrderId == id) {
         localStorage.removeItem('currentOrderId')
         db.auth.updateUserSettings({ currentOrderId: '' })
       }
-      result = res.key
     })
-
-    return result
   }
 
   async getOrder(orderId: string): Promise<NotWellDefinedObject> {
@@ -213,8 +223,70 @@ export class OrderPlugin implements OrderPluginImp {
     return result
   }
 
+  async getAllOrdersStatus() {
+    let result: NotWellDefinedObject[] = []
+
+    const orders = await db.query('orders').sort('orderId', false).get()
+
+    if (orders) {
+      orders.forEach((order) => {
+        // this.removeOrder(order.key)
+        if (order.key != 'null') {
+          const id = order.key
+          const value = order.val()
+
+          result.push({ id, ...value })
+        } else {
+          this.removeOrder(order.key)
+        }
+      })
+    } else {
+      result = []
+    }
+
+    return result
+  }
+
   async getOrdersCount(): Promise<number> {
     return await db.query('orders').count()
+  }
+
+  async getOrdersCountByParameters(
+    parameters: NotWellDefinedObject
+  ): Promise<number> {
+    return await db
+      .query('orders')
+      .filter(`${parameters.property}`, '==', `${parameters.value}`)
+      .count()
+  }
+
+  async getOrdersByPaidDate(from: number, to: number) {
+    let result: NotWellDefinedObject[] = []
+
+    const orders = await db
+      .query('orders')
+      .filter('status', '==', 'paid')
+      .filter('paidAt', 'between', [from, to])
+      .sort('orderId', false)
+      .get()
+
+    if (orders) {
+      orders.forEach((order) => {
+        // this.removeOrder(order.key)
+        if (order.key != 'null') {
+          const id = order.key
+          const value = order.val()
+
+          result.push({ id, ...value })
+        } else {
+          this.removeOrder(order.key)
+        }
+      })
+    } else {
+      result = []
+    }
+
+    return result
   }
 
   async print(printData: NotWellDefinedObject): Promise<any> {

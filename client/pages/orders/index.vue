@@ -54,10 +54,10 @@
             <v-row no-gutters align="center">
               <v-col cols="2" md="1">Order ID</v-col>
               <v-col cols="3">Date</v-col>
-              <v-col cols="2">Customer</v-col>
-              <v-col cols="2">Status</v-col>
+              <v-col cols="3">Customer</v-col>
+              <v-col cols="2" class="text-center">Status</v-col>
               <v-col cols="1" class="text-center">Items</v-col>
-              <v-col cols="2" md="3" class="text-center">Subtotal</v-col>
+              <v-col cols="2" class="text-center">Subtotal</v-col>
             </v-row>
           </v-sheet>
           <v-sheet
@@ -100,13 +100,13 @@
                 <v-col cols="3">{{
                   new Date(order.createdAt).toLocaleString()
                 }}</v-col>
-                <v-col cols="2">
+                <v-col cols="3">
                   {{ order.customer }}
                 </v-col>
                 <v-col
                   v-if="order.id != currentOrderId"
                   cols="2"
-                  class="d-flex align-center justify-start"
+                  class="d-flex align-center justify-center"
                 >
                   <v-sheet
                     v-if="order.status == 'pending'"
@@ -162,12 +162,14 @@
                 <v-col cols="1" class="text-center">
                   {{ order.items.length }}
                 </v-col>
-                <v-col
-                  cols="2"
-                  md="3"
-                  class="d-flex align-center justify-center"
-                >
-                  {{ $format.currencyFormat(getSubtotal(order) || 0) }}
+                <v-col cols="2" class="d-flex align-center justify-center">
+                  {{
+                    $format.currencyFormat(
+                      order.payment != undefined
+                        ? order.payment.amountPaid - order.payment.change
+                        : 0
+                    )
+                  }}
                 </v-col>
               </v-row>
             </v-sheet>
@@ -305,12 +307,23 @@
       </v-sheet>
       <v-sheet
         v-if="$vuetify.breakpoint.lgAndUp"
-        width="30%"
-        min-width="350"
-        Cracker
-        class="rounded-lg ml-4"
-        elevation="1"
-      ></v-sheet>
+        width="350"
+        class="d-flex flex-column ml-4"
+        color="transparent"
+      >
+        <v-sheet class="rounded-lg d-flex flex-column px-2" elevation="1">
+          <OrderStatus
+            :refreshStatus="refreshStatus"
+            v-on:statusRefreshed="refreshStatus = false"
+          />
+        </v-sheet>
+        <v-sheet
+          class="rounded-lg d-flex flex-column px-2 flex-grow-1 mt-4 overflow-y-auto pb-2"
+          elevation="1"
+        >
+          <OrderReport />
+        </v-sheet>
+      </v-sheet>
     </v-sheet>
     <OrderModal :orderModal="orderModal.modal" v-on:closeModal="refreshTable" />
     <DeleteModal
@@ -326,6 +339,8 @@ import { Component, Vue, Watch } from 'nuxt-property-decorator'
 import ProductSearchBar from '~/components/Inventory/ProductSearchBar.vue'
 import OrderModal from '~/components/Modals/OrderModal.vue'
 import DeleteModal from '~/components/Modals/DeleteModal.vue'
+import OrderReport from '~/components/Orders/OrderReport.vue'
+import OrderStatus from '~/components/Orders/OrderStatus.vue'
 
 @Component({
   layout: 'main',
@@ -334,6 +349,8 @@ import DeleteModal from '~/components/Modals/DeleteModal.vue'
     ProductSearchBar,
     OrderModal,
     DeleteModal,
+    OrderReport,
+    OrderStatus,
   },
 })
 export default class OrdersPage extends Vue {
@@ -351,6 +368,7 @@ export default class OrdersPage extends Vue {
   }
   optionBtn = false
   deleteModal = false
+  refreshStatus = false
 
   filter: NotWellDefinedObject = {
     show: false,
@@ -438,6 +456,7 @@ export default class OrdersPage extends Vue {
     this.$order.getFulfilledOrders()
     this.selectedOrders = []
     this.deleteModal = false
+    this.refreshStatus = true
     this.orderModal.modal = false
   }
 
@@ -447,12 +466,7 @@ export default class OrdersPage extends Vue {
   }
 
   async getOrders() {
-    await this.$order
-      .getAllOrders(this.page, this.numOfItems)
-      .then((data: NotWellDefinedObject[]) => {
-        this.orders = data
-      })
-      .catch((err) => console.error(err))
+    this.orders = await this.$order.getAllOrders(this.page, this.numOfItems)
   }
 
   async mounted() {

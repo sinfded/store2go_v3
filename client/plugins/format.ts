@@ -25,6 +25,23 @@ export class FormatPlugin {
   orderIdFormat(value: number | string) {
     return String(value).padStart(4, '0')
   }
+
+  longDateFormat(value: string, a: NotWellDefinedObject[], separator: string) {
+    let s = this.join(
+      new Date(value != null ? value : Date.now()),
+      a,
+      separator
+    )
+    return s
+  }
+
+  join(t: any, a: any, s: any) {
+    function format(m: any) {
+      let f = new Intl.DateTimeFormat('en', m)
+      return f.format(t)
+    }
+    return a.map(format).join(s)
+  }
 }
 
 const formatPlugin: Plugin = function (context, inject) {

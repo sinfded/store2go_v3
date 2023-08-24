@@ -40,11 +40,14 @@ export interface OrderPluginImp {
   ): Promise<NotWellDefinedObject>
   getOrder(orderId: string): Promise<NotWellDefinedObject>
   getAllOrders(page: number, limit: number): Promise<NotWellDefinedObject[]>
+  getAllOrdersStatus(): Promise<NotWellDefinedObject[]>
+  getOrdersByPaidDate(from: number, to: number): Promise<NotWellDefinedObject[]>
   getFulfilledOrders(): Promise<NotWellDefinedObject>
   setCurrentOrder(orderId: string): Promise<NotWellDefinedObject>
   removeOrder(orderId: string): void
   removeOrders(orderIds: string[]): void
   getOrdersCount(): Promise<number>
+  getOrdersCountByParameters(parameters: NotWellDefinedObject): Promise<number>
   print(data: NotWellDefinedObject): Promise<any>
   testPrint(data: NotWellDefinedObject): Promise<any>
   getAllCustomers(): Promise<NotWellDefinedObject>
